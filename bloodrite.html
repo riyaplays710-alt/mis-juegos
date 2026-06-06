@@ -71,7 +71,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Pr
 .bt{height:10px;border:1px solid rgba(100,40,60,.5);background:rgba(20,5,20,.85);position:relative;overflow:hidden;}
 .bf{height:100%;transition:width .09s linear;position:relative;}
 .bf::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,.22),transparent);}
-#hp-b{background:linear-gradient(90deg,#8a0e1e,#d01828,#ff3040);}
+#hp-b{background:linear-gradient(90deg,#8a0e1e,#d01828,#ff3040);position:relative;z-index:1;transition:width .05s linear;}
+#hp-ghost{position:absolute;left:0;top:0;height:100%;z-index:0;background:rgba(255,225,225,.6);transition:width .35s ease-out;border-radius:0;}
 #sh-b{background:repeating-linear-gradient(90deg,#12304f 0 4px,#18476f 4px 8px,#1f6595 8px 12px,#2b8dc7 12px 16px,#7be1ff 16px 20px);box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.08),0 0 12px rgba(85,187,255,.2)}
 #xp-b{background:linear-gradient(90deg,#3a0a88,#6622cc,#9944ff);}
 #mn-b{background:linear-gradient(90deg,#0a1a88,#1144cc,#2266ff);}
@@ -338,7 +339,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Pr
   <div id="hud">
     <div class="hg">
       <div class="hl">HP / ESCUDO</div>
-      <div class="bt" style="width:120px"><div class="bf" id="hp-b" style="width:100%"><div class="bt-txt" id="hp-v">-</div></div></div>
+      <div class="bt" style="width:120px"><div class="bf" id="hp-ghost" style="width:100%"></div><div class="bf" id="hp-b" style="width:100%"><div class="bt-txt" id="hp-v">-</div></div></div>
       <div class="bt" style="width:120px"><div class="bf" id="sh-b" style="width:0%"><div class="bt-txt" id="sh-v">-</div></div></div>
     </div>
     <div class="hg">
@@ -585,7 +586,7 @@ function useSpecial(){
 }
 
 // Damage = baseDmg × (1 + (level-1) × 0.22) × dmgBonusMult × crit  (sube fuerte por nivel)
-function playerDmgMult(p){return(1+(p.level-1)*0.22)*p.dmgBonusMult;}
+function playerDmgMult(p){return(3+(p.level-1)*0.32)*p.dmgBonusMult;}
 
 const WP=[{name:'Daga Triple',emoji:'🗡',cd:.36,fire:'dagger',desc:'3 dagas rapidas'},{name:'Latigo',emoji:'🔗',cd:.95,fire:'whip',desc:'Arco que penetra'},{name:'Bomba',emoji:'💣',cd:3.4,fire:'bomb',desc:'Explosion en area'},{name:'Lanza',emoji:'🪃',cd:1.1,fire:'spear',desc:'Penetra 5 enemigos'},{name:'Libro Arcano',emoji:'📖',cd:1.9,fire:'book',desc:'4 orbes orbitales'}];
 const AP=[
@@ -881,13 +882,16 @@ function drawFrame(){
   ctx.save();if(G.shake>.5)ctx.translate((Math.random()-.5)*G.shake,(Math.random()-.5)*G.shake);
   const CX=G.cam.x,CY=G.cam.y;drawMap(CX,CY);drawPortal(G.portal,CX,CY,G.overTime);
   for(const c of G.coinItems)drawCoin(c,CX,CY);for(const c of G.chests)drawChest(c,CX,CY);for(const t of G.totems)drawTotem(t,CX,CY);for(const t of G.traps)drawTrap(t,CX,CY);for(const pk of G.pickups)drawPickup(pk,CX,CY);for(const p of G.parts)drawPart(p,CX,CY);for(const pr of G.projs)drawPR(pr,CX,CY);for(const e of G.enemies)drawE(e,CX,CY);for(const gem of G.gems)drawGem(gem,CX,CY);drawPL(G.player,CX,CY);
+  if(G.player.hitFlash>0){ctx.save();ctx.globalAlpha=Math.min(.55,G.player.hitFlash/12);ctx.fillStyle='#ff2222';ctx.fillRect(GW/2-18,GH/2-32,36,46);ctx.restore();} // flash rojo sobre el jugador
   if(G.overTime)pxa(0,0,GW,GH,'#cc0000',Math.min(.28,G.overTimeMult*.06)*(.5+Math.sin(Date.now()/500)*.5));
   const lg=ctx.createRadialGradient(GW/2,GH/2,10,GW/2,GH/2,190);lg.addColorStop(0,'rgba(255,240,205,.10)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.fillRect(0,0,GW,GH); // luz ambiental suave alrededor del jugador
   const vg=ctx.createRadialGradient(GW/2,GH/2,GW*.07,GW/2,GH/2,GW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(4,0,8,.4)');ctx.fillStyle=vg;ctx.fillRect(0,0,GW,GH);ctx.restore();
 }
 
 function overlap(ax,ay,aw,ah,bx,by,bw,bh){return ax-aw/2<bx+bw/2&&ax+aw/2>bx-bw/2&&ay-ah/2<by+bh/2&&ay+ah/2>by-bh/2;}
-function damageP(g,dmg){const p=g.player;if(p.invincibleTimer>0)return;dmg*=(1-(p.resist||0));if(p.shield>0){const abs=Math.min(p.shield,dmg);p.shield-=abs;dmg-=abs;if(p.shield<0)p.shield=0;spawnPs(g,p.x,p.y,'#44aaff',3);}if(dmg>0){p.hp-=dmg;flashScreen('#ff0000');g.shake=7;}p.invincibleTimer=55;if(p.hp<=0)gameOver();}
+let _ac=null;
+function sfxHit(){try{_ac=_ac||new (window.AudioContext||window.webkitAudioContext)();const o=_ac.createOscillator(),gn=_ac.createGain();o.type='square';o.frequency.setValueAtTime(120,_ac.currentTime);o.frequency.exponentialRampToValueAtTime(45,_ac.currentTime+.12);gn.gain.setValueAtTime(.09,_ac.currentTime);gn.gain.exponentialRampToValueAtTime(.001,_ac.currentTime+.14);o.connect(gn);gn.connect(_ac.destination);o.start();o.stop(_ac.currentTime+.15);}catch(e){}}
+function damageP(g,dmg){const p=g.player;if(p.invincibleTimer>0)return;dmg*=(1-(p.resist||0));if(p.shield>0){const abs=Math.min(p.shield,dmg);p.shield-=abs;dmg-=abs;if(p.shield<0)p.shield=0;spawnPs(g,p.x,p.y,'#44aaff',3);}if(dmg>0){dmg=Math.max(1,Math.round(dmg));p.hp-=dmg;p.hitFlash=12;flashScreen('#ff0000');g.shake=Math.max(g.shake,9);spawnPs(g,p.x,p.y,'#cc0010',10);spawnDN(p.x,p.y-18,dmg,false,false,false);sfxHit();}p.invincibleTimer=26;if(p.hp<=0)gameOver();}
 function spawnPickup(g,x,y,type,val){g.pickups||(g.pickups=[]);g.pickups.push({x,y,type,val,life:820,w:14,h:14,bob:Math.random()*6.28})}
 function maybeDropSurvival(g,e){if(e.isBoss)return;if(Math.random()<.14)spawnPickup(g,e.x+(Math.random()-.5)*14,e.y+(Math.random()-.5)*14,'hp',8+Math.floor(Math.random()*10));if(Math.random()<.11)spawnPickup(g,e.x+(Math.random()-.5)*14,e.y+(Math.random()-.5)*14,'shield',6+Math.floor(Math.random()*9))}
 function killE(g,idx){
@@ -1000,22 +1004,22 @@ function update(ts){
   if(p.orbCount>0)for(let i=0;i<p.orbCount;i++){const a=Date.now()/640+i*(Math.PI*2/p.orbCount),ox=p.x+Math.cos(a)*38,oy=p.y+Math.sin(a)*22;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(ox-e.x,oy-e.y)<18){const od=calcD(G,p.baseDmg*.8,false);e.hp-=od;e.hf=3;if(e.hp<=0)killE(G,j);}}}
   // Aura: dana continuamente a los enemigos cercanos
   if(p.auraDmg>0){for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(p.x-e.x,p.y-e.y)<p.auraR){e.hp-=p.auraDmg*playerDmgMult(p)*dt*3;e.hf=2;if(e.hp<=0)killE(G,j);}}if(Math.random()<.25)spawnPs(G,p.x+(Math.random()-.5)*p.auraR,p.y+(Math.random()-.5)*p.auraR,'#ffcc66',1);}
-  // Enemy AI — persecucion con prediccion de movimiento; el sigilo de Snake les hace perder el rastro
-  G.enemies.sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);
-  const lim=Math.min(G.enemies.length,80);
+  // Enemy AI: TODOS persiguen al jugador SIEMPRE (sin limite por distancia ni "dormirse"). O(n) por frame.
   const stealthed=p.stealthTimer>0;
-  const tx=p.x+(p._vx||0)*9,ty=p.y+(p._vy||0)*9; // punto adelantado: la IA apunta a donde IRA el jugador
-  for(let i=0;i<lim;i++){const e=G.enemies[i];
+  const tx=p.x+(p._vx||0)*9,ty=p.y+(p._vy||0)*9; // prediccion: apuntan a donde IRA el jugador
+  for(let i=G.enemies.length-1;i>=0;i--){const e=G.enemies[i];
     if(e.burnT>0){e.burnT--;e.hp-=(e.burnDmg||0)*dt;if(Math.random()<.25)spawnPs(G,e.x,e.y,'#ff7722',1);if(e.hp<=0){killE(G,i);continue;}}
     let gx=tx,gy=ty;
     if(stealthed){ e.wx=(e.wx||Math.random()*6.28)+(Math.random()-.5)*.3; gx=e.x+Math.cos(e.wx)*60; gy=e.y+Math.sin(e.wx)*60; }
-    const dx=gx-e.x,dy=gy-e.y,dist=Math.hypot(dx,dy)||1;
+    let dx=gx-e.x,dy=gy-e.y;const dist=Math.hypot(dx,dy)||1;dx/=dist;dy/=dist;
+    // Enemigos rapidos: rodean al jugador cuando estan cerca (componente tangencial)
+    if(!stealthed&&e.spd>=1.4&&dist<170){const tpx=-dy,tpy=dx,sgn=(i&1)?1:-1;dx+=tpx*0.7*sgn;dy+=tpy*0.7*sgn;const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;}
     const es=e.spd*GAME_SPEED*(stealthed?.4:1);
-    e.x+=dx/dist*es;e.y+=dy/dist*es;
+    e.x+=dx*es;e.y+=dy*es;
     e.animTimer+=dt;if(e.animTimer>.22){e.animFrame++;e.animTimer=0;}
-    if(!stealthed&&overlap(p.x,p.y,p.w,p.h,e.x,e.y,e.w,e.h)){damageP(G,e.dmg*dt*3.2);spawnPs(G,p.x,p.y,'#ff0000',8);}
+    if(!stealthed&&overlap(p.x,p.y,p.w+2,p.h+2,e.x,e.y,e.w,e.h)){damageP(G,e.dmg*0.4);}
   }
-  if(G.enemies.length>220)G.enemies.length=220;
+  if(G.enemies.length>260)G.enemies.splice(0,G.enemies.length-260);
   // Gems
   for(let i=G.gems.length-1;i>=0;i--){const gem=G.gems[i];const dx=p.x-gem.x,dy=p.y-gem.y,d=Math.hypot(dx,dy);if(d<p.xpRadius){gem.x+=dx*.16;gem.y+=dy*.16;}if(d<16){p.xp+=Math.ceil(gem.val*(p.xpMult||1));G.gems.splice(i,1);if(p.xp>=p.xpNext)levelUp();}}
   // Coins
@@ -1030,7 +1034,7 @@ function explodeBomb(g,pr){const rad=62*pr.scale;for(let j=g.enemies.length-1;j>
 
 function updateHUD(){
   const p=G.player,md=G.mapDef;
-  document.getElementById('hp-b').style.width=(Math.max(0,p.hp)/Math.max(1,p.maxHp)*100)+'%';document.getElementById('hp-v').textContent=Math.round(Math.max(0,p.hp))+'/'+Math.max(1,Math.round(p.maxHp));
+  const _hpw=(Math.max(0,p.hp)/Math.max(1,p.maxHp)*100)+'%';document.getElementById('hp-b').style.width=_hpw;document.getElementById('hp-ghost').style.width=_hpw;document.getElementById('hp-v').textContent=Math.round(Math.max(0,p.hp))+'/'+Math.max(1,Math.round(p.maxHp));
   document.getElementById('sh-b').style.width=(p.maxShield>0?(Math.max(0,p.shield)/p.maxShield*100):0)+'%';document.getElementById('sh-v').textContent=Math.max(0,Math.round(p.shield))+'/'+Math.max(0,Math.round(p.maxShield));
   document.getElementById('xp-b').style.width=(p.xp/p.xpNext*100)+'%';document.getElementById('xp-v').textContent=p.xp+'/'+p.xpNext;
   document.getElementById('lv-v').textContent=p.level;document.getElementById('kills-v').textContent=G.kills;document.getElementById('wave-v').textContent=G.waveNum;
@@ -1095,5 +1099,3 @@ resizeCanvas();updateIntroMapPreview();
 </script>
 </body>
 </html>
-
-<!-- BLOOD RITE -->
