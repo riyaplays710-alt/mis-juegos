@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curiosidades de Videojuegos 🎮</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="icon">🎮</span>
+                <h1>Gaming Curiosities</h1>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn active" data-category="all">Todas</button>
+                <button class="nav-btn" data-category="retro">Retro</button>
+                <button class="nav-btn" data-category="moderna">Moderna</button>
+                <button class="nav-btn" data-category="easter-eggs">Easter Eggs</button>
+                <button class="nav-btn" data-category="records">Récords</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h2 class="hero-title">Descubre el Mundo de los Videojuegos</h2>
+            <p class="hero-subtitle">Curiosidades, secretos y datos fascinantes que no conocías</p>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Buscar curiosidades..." />
+                <button id="searchBtn">🔍</button>
+            </div>
+        </div>
+        <div class="hero-background"></div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stat-item">
+                <span class="stat-number" data-target="150">0</span>
+                <span class="stat-label">Curiosidades</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="50">0</span>
+                <span class="stat-label">Videojuegos</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="25">0</span>
+                <span class="stat-label">Easter Eggs</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="40">0</span>
+                <span class="stat-label">Récords</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Curiosities Grid -->
+    <section class="curiosities">
+        <div class="container">
+            <h2 class="section-title">Curiosidades Destacadas</h2>
+            
+            <div class="grid" id="curiositiesGrid">
+                <!-- Retro Gaming -->
+                <div class="card" data-category="retro">
+                    <div class="card-header">
+                        <span class="card-icon">👾</span>
+                        <span class="card-tag retro">Retro</span>
+                    </div>
+                    <h3 class="card-title">Pac-Man fue diseñado para atraer mujeres</h3>
+                    <p class="card-description">
+                        El creador Toru Iwatani diseñó Pac-Man pensando en las jugadoras, inspirándose en una pizza a la que le faltaba una porción. Quería crear algo menos violento que los juegos de la época.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Pac-Man (1980)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="retro">
+                    <div class="card-header">
+                        <span class="card-icon">🍄</span>
+                        <span class="card-tag retro">Retro</span>
+                    </div>
+                    <h3 class="card-title">Mario golpeaba bloques con el puño</h3>
+                    <p class="card-description">
+                        Originalmente, Mario no saltaba para golpear los bloques con la cabeza, sino que los golpeaba con el puño. Debido a las limitaciones gráficas, parecía que usaba la cabeza.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Super Mario Bros (1985)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="retro">
+                    <div class="card-header">
+                        <span class="card-icon">🦔</span>
+                        <span class="card-tag retro">Retro</span>
+                    </div>
+                    <h3 class="card-title">Sonic fue creado para competir con Mario</h3>
+                    <p class="card-description">
+                        SEGA creó a Sonic the Hedgehog específicamente para tener una mascota que rivalizara con Mario de Nintendo. Su velocidad representaba el procesador más rápido de la Genesis.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Sonic (1991)</span>
+                    </div>
+                </div>
+
+                <!-- Modern Gaming -->
+                <div class="card" data-category="moderna">
+                    <div class="card-header">
+                        <span class="card-icon">⚔️</span>
+                        <span class="card-tag moderna">Moderna</span>
+                    </div>
+                    <h3 class="card-title">Minecraft vendió más que todos los COD juntos</h3>
+                    <p class="card-description">
+                        Minecraft es el videojuego más vendido de la historia con más de 300 millones de copias, superando a toda la saga Call of Duty combinada.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Minecraft (2011)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="moderna">
+                    <div class="card-header">
+                        <span class="card-icon">🎭</span>
+                        <span class="card-tag moderna">Moderna</span>
+                    </div>
+                    <h3 class="card-title">GTA V costó más que películas de Hollywood</h3>
+                    <p class="card-description">
+                        El desarrollo y marketing de Grand Theft Auto V costó aproximadamente $265 millones, más que películas como Avatar o Piratas del Caribe.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">GTA V (2013)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="moderna">
+                    <div class="card-header">
+                        <span class="card-icon">🗡️</span>
+                        <span class="card-tag moderna">Moderna</span>
+                    </div>
+                    <h3 class="card-title">The Witcher 3 tiene 450,000 palabras de diálogo</h3>
+                    <p class="card-description">
+                        El guión de The Witcher 3 es más largo que la trilogía del Señor de los Anillos combinada. Contiene más de 450,000 palabras de diálogo en inglés.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">The Witcher 3 (2015)</span>
+                    </div>
+                </div>
+
+                <!-- Easter Eggs -->
+                <div class="card" data-category="easter-eggs">
+                    <div class="card-header">
+                        <span class="card-icon">🥚</span>
+                        <span class="card-tag easter">Easter Egg</span>
+                    </div>
+                    <h3 class="card-title">El primer Easter Egg de la historia</h3>
+                    <p class="card-description">
+                        En "Adventure" de Atari 2600 (1979), Warren Robinett escondió su nombre en una habitación secreta, creando el primer Easter Egg conocido en videojuegos.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Adventure (1979)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="easter-eggs">
+                    <div class="card-header">
+                        <span class="card-icon">🎵</span>
+                        <span class="card-tag easter">Easter Egg</span>
+                    </div>
+                    <h3 class="card-title">Halo: Combat Evolved y su huevo musical</h3>
+                    <p class="card-description">
+                        Si disparas a los marines en cierto orden en Halo, tocarán las notas de la canción principal del juego. Bungie escondió muchos secretos como este.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Halo (2001)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="easter-eggs">
+                    <div class="card-header">
+                        <span class="card-icon">🐉</span>
+                        <span class="card-tag easter">Easter Egg</span>
+                    </div>
+                    <h3 class="card-title">Skyrim y la flecha en la rodilla</h3>
+                    <p class="card-description">
+                        La famosa frase "solía ser un aventurero como tú, hasta que recibí una flecha en la rodilla" fue dicha por casi todos los guardias, convirtiéndose en un meme legendario.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Skyrim (2011)</span>
+                    </div>
+                </div>
+
+                <!-- Records -->
+                <div class="card" data-category="records">
+                    <div class="card-header">
+                        <span class="card-icon">🏆</span>
+                        <span class="card-tag record">Récord</span>
+                    </div>
+                    <h3 class="card-title">El juego más largo para completar al 100%</h3>
+                    <p class="card-description">
+                        "The Elder Scrolls Online" puede tomar más de 1,000 horas para completarlo al 100%, convirtiéndolo en uno de los juegos más extensos jamás creados.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Elder Scrolls Online (2014)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="records">
+                    <div class="card-header">
+                        <span class="card-icon">💰</span>
+                        <span class="card-tag record">Récord</span>
+                    </div>
+                    <h3 class="card-title">El jugador más rico de la historia</h3>
+                    <p class="card-description">
+                        Tyler "Ninja" Blevins ganó más de $10 millones en un año jugando Fortnite, estableciendo récords de ingresos para streamers de videojuegos.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Fortnite (2017)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="records">
+                    <div class="card-header">
+                        <span class="card-icon">🎮</span>
+                        <span class="card-tag record">Récord</span>
+                    </div>
+                    <h3 class="card-title">El E-Sport con mayor premio</h3>
+                    <p class="card-description">
+                        The International de Dota 2 tiene el premio acumulado más grande en la historia de los e-sports, superando los $40 millones en algunas ediciones.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Dota 2 (2013)</span>
+                    </div>
+                </div>
+
+                <!-- More curiosities -->
+                <div class="card" data-category="retro">
+                    <div class="card-header">
+                        <span class="card-icon">🎯</span>
+                        <span class="card-tag retro">Retro</span>
+                    </div>
+                    <h3 class="card-title">Tetris causa el "Efecto Tetris"</h3>
+                    <p class="card-description">
+                        Jugar mucho Tetris puede hacer que veas patrones de bloques cayendo en la vida real, un fenómeno psicológico real estudiado por científicos.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Tetris (1984)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="moderna">
+                    <div class="card-header">
+                        <span class="card-icon">🌍</span>
+                        <span class="card-tag moderna">Moderna</span>
+                    </div>
+                    <h3 class="card-title">World of Warcraft como segundo trabajo</h3>
+                    <p class="card-description">
+                        Algunos jugadores chinos trabajaban "farmeando" oro en WoW para venderlo por dinero real, convirtiéndolo literalmente en su trabajo de tiempo completo.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">World of Warcraft (2004)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="easter-eggs">
+                    <div class="card-header">
+                        <span class="card-icon">🎪</span>
+                        <span class="card-tag easter">Easter Egg</span>
+                    </div>
+                    <h3 class="card-title">Portal y su canción memorable</h3>
+                    <p class="card-description">
+                        "Still Alive", la canción final de Portal cantada por GLaDOS, se convirtió en un fenómeno viral y es considerada una de las mejores canciones de videojuegos.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Portal (2007)</span>
+                    </div>
+                </div>
+
+                <div class="card" data-category="records">
+                    <div class="card-header">
+                        <span class="card-icon">⚡</span>
+                        <span class="card-tag record">Récord</span>
+                    </div>
+                    <h3 class="card-title">El speedrun más impresionante</h3>
+                    <p class="card-description">
+                        El speedrun de Super Mario 64 con 120 estrellas se completó en menos de 1 hora y 40 minutos, cuando normalmente toma más de 20 horas a un jugador casual.
+                    </p>
+                    <div class="card-footer">
+                        <span class="game-name">Super Mario 64 (1996)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="no-results" id="noResults" style="display: none;">
+                <span class="no-results-icon">🔍</span>
+                <h3>No se encontraron curiosidades</h3>
+                <p>Intenta con otros términos de búsqueda</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fun Facts Section -->
+    <section class="fun-facts">
+        <div class="container">
+            <h2 class="section-title">Datos Curiosos Rápidos</h2>
+            <div class="facts-grid">
+                <div class="fact-item">
+                    <span class="fact-icon">🎨</span>
+                    <p>El color de Mario era rojo porque era el único color que destacaba bien en la pantalla de arcade</p>
+                </div>
+                <div class="fact-item">
+                    <span class="fact-icon">🐢</span>
+                    <p>Los Koopa Troopa de Mario fueron inspirados en el plato coreano "gukbap" (sopa con arroz)</p>
+                </div>
+                <div class="fact-item">
+                    <span class="fact-icon">🎮</span>
+                    <p>El primer control de videojuegos solo tenía un botón y un stick</p>
+                </div>
+                <div class="fact-item">
+                    <span class="fact-icon">💎</span>
+                    <p>El diamante de Minecraft tiene exactamente el mismo color que el cielo de Minecraft</p>
+                </div>
+                <div class="fact-item">
+                    <span class="fact-icon">🚗</span>
+                    <p>En GTA San Andreas, el juego tiene más de 250 vehículos diferentes para conducir</p>
+                </div>
+                <div class="fact-item">
+                    <span class="fact-icon">🎭</span>
+                    <p>The Last of Us tiene más de 2 años de captura de movimiento facial</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Gaming Curiosities 🎮</h3>
+                    <p>Tu fuente de curiosidades y datos fascinantes del mundo de los videojuegos.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Categorías</h4>
+                    <ul>
+                        <li>Juegos Retro</li>
+                        <li>Juegos Modernos</li>
+                        <li>Easter Eggs</li>
+                        <li>Récords Mundiales</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Conecta</h4>
+                    <div class="social-icons">
+                        <span class="social-icon">🎮</span>
+                        <span class="social-icon">🕹️</span>
+                        <span class="social-icon">👾</span>
+                        <span class="social-icon">🎯</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Gaming Curiosities. Hecho con ❤️ por gamers para gamers.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PRISMA: Fluxborne</title>
+    <link rel="stylesheet" href="prisma.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Canvas principal del juego -->
+        <canvas id="game"></canvas>
+
+        <!-- HUD (interfaz durante el juego) -->
+        <div id="hud" class="hidden">
+            <!-- Barra superior -->
+            <div class="hud-top">
+                <div class="hud-timer">
+                    <span id="timer">00:00</span>
+                </div>
+                <div class="hud-stats">
+                    <div class="hud-stat">
+                        <span class="stat-icon">💀</span>
+                        <span id="killCount">0</span>
+                    </div>
+                    <div class="hud-stat">
+                        <span class="stat-icon">⭐</span>
+                        <span id="levelDisplay">1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aviso de eclipse -->
+            <div id="eclipseWarning" class="eclipse-warning hidden">
+                <span>⚫ ECLIPSE ⚫</span>
+                <small>Daño x2 · Enemigos élite</small>
+            </div>
+
+            <!-- Barras inferiores -->
+            <div class="hud-bottom">
+                <!-- Barra de vida -->
+                <div class="bar-group">
+                    <div class="bar-label">VIDA</div>
+                    <div class="bar-track">
+                        <div id="healthBar" class="bar-fill health"></div>
+                        <span id="healthText" class="bar-text">100/100</span>
+                    </div>
+                </div>
+                <!-- Barra de experiencia -->
+                <div class="bar-group">
+                    <div class="bar-label">XP</div>
+                    <div class="bar-track">
+                        <div id="xpBar" class="bar-fill xp"></div>
+                    </div>
+                </div>
+                <!-- Barra de FLUJO (mecánica única) -->
+                <div class="bar-group flow-group">
+                    <div class="bar-label">FLUJO</div>
+                    <div class="bar-track flow-track">
+                        <div id="flowBar" class="bar-fill flow"></div>
+                        <span id="flowMult" class="bar-text">x1.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de armas activas -->
+            <div id="weaponSlots" class="weapon-slots"></div>
+        </div>
+
+        <!-- Pantalla de MENÚ principal -->
+        <div id="menuScreen" class="screen">
+            <div class="screen-content">
+                <h1 class="game-title">PRISMA</h1>
+                <p class="game-subtitle">F L U X B O R N E</p>
+                <p class="game-desc">
+                    Eres un fragmento de luz consciente en un mundo devorado por el Vacío.<br>
+                    <strong>Nunca dejes de moverte.</strong> El movimiento es tu poder.
+                </p>
+
+                <div class="how-to-play">
+                    <h3>Cómo jugar</h3>
+                    <div class="instructions">
+                        <div class="instruction"><kbd>W A S D</kbd> / <kbd>↑ ← ↓ →</kbd> Moverse</div>
+                        <div class="instruction"><span class="hl-flow">FLUJO</span> Muévete sin parar para subir tu daño y cadencia</div>
+                        <div class="instruction"><span class="hl-eclipse">ECLIPSE</span> Sobrevive a las oleadas élite por doble daño</div>
+                        <div class="instruction"><kbd>P</kbd> Pausa · Tus armas disparan solas</div>
+                    </div>
+                </div>
+
+                <button id="startBtn" class="btn-primary">INICIAR</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de SUBIR DE NIVEL (elección de mejoras) -->
+        <div id="levelupScreen" class="screen hidden">
+            <div class="screen-content levelup-content">
+                <h2 class="levelup-title">¡NIVEL <span id="levelupLevel">2</span>!</h2>
+                <p class="levelup-sub">Elige una mejora</p>
+                <div id="upgradeOptions" class="upgrade-options"></div>
+            </div>
+        </div>
+
+        <!-- Pantalla de PAUSA -->
+        <div id="pauseScreen" class="screen hidden">
+            <div class="screen-content">
+                <h2 class="pause-title">PAUSA</h2>
+                <button id="resumeBtn" class="btn-primary">CONTINUAR</button>
+                <button id="quitBtn" class="btn-secondary">SALIR AL MENÚ</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de FIN DE PARTIDA -->
+        <div id="gameoverScreen" class="screen hidden">
+            <div class="screen-content">
+                <h2 id="gameoverTitle" class="gameover-title">EL VACÍO TE CONSUMIÓ</h2>
+                <div class="gameover-stats">
+                    <div class="go-stat">
+                        <span class="go-stat-value" id="finalTime">00:00</span>
+                        <span class="go-stat-label">Tiempo sobrevivido</span>
+                    </div>
+                    <div class="go-stat">
+                        <span class="go-stat-value" id="finalKills">0</span>
+                        <span class="go-stat-label">Enemigos eliminados</span>
+                    </div>
+                    <div class="go-stat">
+                        <span class="go-stat-value" id="finalLevel">1</span>
+                        <span class="go-stat-label">Nivel alcanzado</span>
+                    </div>
+                </div>
+                <button id="retryBtn" class="btn-primary">JUGAR DE NUEVO</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="prisma.js"></script>
+</body>
+</html>
