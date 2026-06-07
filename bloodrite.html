@@ -289,6 +289,28 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .skin-mini{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid var(--rc,#444);cursor:pointer;box-shadow:0 0 8px var(--rc);}
 .skin-mini.sel{border-width:3px;transform:scale(1.12);}
 .skin-mini.locked{opacity:.4;filter:grayscale(1);cursor:not-allowed;box-shadow:none;}
+/* ===== FASE 3: tomos, armas, sinergias ===== */
+#tome-slots{display:flex;gap:8px;justify-content:center;margin:6px 0;}
+.tome-slot{width:48px;height:48px;border:2px dashed #44306a;background:rgba(12,7,20,.7);display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:6px;position:relative;}
+.tome-slot.filled{border-style:solid;border-color:var(--rc,#7a3aff);box-shadow:0 0 12px var(--rc,#7a3aff);cursor:pointer;}
+.tome-slot .ts-x{position:absolute;top:-6px;right:-6px;font-size:8px;background:#a11;color:#fff;border-radius:50%;width:14px;height:14px;line-height:14px;text-align:center;}
+.tome-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;overflow-y:auto;max-height:50vh;}
+.tome-card{width:118px;border:2px solid var(--rc,#444);background:rgba(12,7,20,.8);padding:8px 7px;display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:transform .1s;}
+.tome-card:hover{transform:translateY(-2px);}
+.tome-card.equipped{box-shadow:0 0 14px var(--rc);border-width:3px;}
+.tome-card.disabled{opacity:.4;cursor:not-allowed;}
+.tome-card .tc-top{display:flex;align-items:center;gap:6px;}
+.tome-card .tc-ico{font-size:18px;}
+.tome-card .tc-nm{font-size:7px;color:#fff;line-height:1.4;}
+.tome-card .tc-rar{font-size:5px;color:var(--rc);letter-spacing:1px;}
+.tome-card .tc-desc{font-size:6px;color:#bca9d0;line-height:1.7;}
+.tome-card .tc-syn{font-size:5px;color:#66dd99;letter-spacing:1px;}
+.wtag{display:inline-block;font-size:5px;padding:1px 4px;border-radius:3px;background:#241636;color:#b9a;margin-left:3px;}
+#wpx-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:60vh;}
+.wpx-row{display:flex;align-items:center;gap:10px;border:1px solid #2a1c38;background:rgba(14,8,22,.6);padding:7px 10px;font-size:7px;color:#ddd;}
+.wpx-row .wpx-ico{font-size:18px;}
+.wpx-row .wpx-nm{flex:1;color:#fff;}
+.wpx-row .wpx-st{color:#9fd;font-size:6px;}
 </style>
 </head>
 
@@ -367,6 +389,7 @@ body.hud-hide-bot #bot-hud{display:none!important;}
       <button class="pxbtn menu-btn" id="btn-continue">CONTINUAR</button>
       <button class="pxbtn menu-btn" id="btn-missions">MISIONES</button>
       <button class="pxbtn menu-btn" id="btn-skins">SKINS</button>
+      <button class="pxbtn menu-btn" id="btn-tomes">TOMOS Y ARMAS</button>
       <button class="pxbtn menu-btn" id="btn-options">OPCIONES</button>
       <button class="pxbtn menu-btn" id="btn-credits">CONTROLES</button>
     </div>
@@ -387,6 +410,20 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div style="font-size:6px;color:#886688;text-align:center;letter-spacing:1px;" id="skin-summary">Equipa una skin. Cada rareza otorga un efecto pasivo.</div>
     <div class="skin-grid" id="skin-grid"></div>
     <div class="ovl-foot"><button class="pxbtn" id="skin-close">CERRAR</button></div>
+  </div>
+</div>
+<div id="tome-ov" class="ovl">
+  <div class="ovl-panel" style="min-width:480px;max-width:620px;">
+    <div class="ovl-title">TOMOS Y ARMAS</div>
+    <div style="font-size:6px;color:#886688;text-align:center;letter-spacing:1px;">Equipa hasta 4 TOMOS (efectos pasivos y sinergias con tus armas).</div>
+    <div id="tome-slots"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:2px;">
+      <button class="tgl on" id="tab-tomes">TOMOS</button>
+      <button class="tgl off" id="tab-weapons">ARMAS</button>
+    </div>
+    <div class="tome-grid" id="tome-grid"></div>
+    <div id="wpx-list" style="display:none;"></div>
+    <div class="ovl-foot"><button class="pxbtn" id="tome-close">CERRAR</button></div>
   </div>
 </div>
 <div id="screen-select" class="screen">
@@ -569,7 +606,8 @@ const DEFAULT_SETTINGS={speed:'normal',sfx:true,screenFx:true,particles:true,dmg
 const SK_SET='bloodrite_settings_v1',SK_SAVE='bloodrite_save_v1';
 let SETTINGS={...DEFAULT_SETTINGS};
 let SAVE={unlockedMaps:[0],lastChar:null,bestLevel:0,totalKills:0,totalCoins:0,runs:0,bestMap:0,
-  unlockedSkins:['default'],equippedSkin:'default',missions:{},bestTime:0,lifeBosses:0,bestWave:0};
+  unlockedSkins:['default'],equippedSkin:'default',missions:{},bestTime:0,lifeBosses:0,bestWave:0,
+  equippedTomes:['t_power','t_swift']};
 
 function loadSettings(){try{const raw=localStorage.getItem(SK_SET);if(raw)SETTINGS={...DEFAULT_SETTINGS,...JSON.parse(raw)};}catch(e){SETTINGS={...DEFAULT_SETTINGS};}}
 function saveSettings(){try{localStorage.setItem(SK_SET,JSON.stringify(SETTINGS));}catch(e){}}
@@ -778,17 +816,17 @@ DRAW_FNS.snake=(p,sx,sy,bob,fl)=>{ctx.save();ctx.translate(sx,sy+bob);if(fl)ctx.
 // CHARS — nerfed base stats, damage scales with level
 // REBALANCE: dano base muy bajo (1-2). Sin escudo inicial (excepto Leon=5). El poder viene de la progresion.
 const CHARS={
-  knight:{name:'Caballero',emoji:'⚔️',hp:120,shield:0,speed:2.0,baseDmg:6,projScale:1.1,cdMult:1.0,regen:0,shieldRegen:0,orbCount:0,xpRadius:80,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:0,weapons:[{name:'Espada',emoji:'⚔️',cd:.75,timer:0,fire:'sword'},{name:'Escudo',emoji:'🛡',cd:3.8,timer:2,fire:'shieldBurst'}]},
-  mage:{name:'Mago',emoji:'🔮',hp:50,shield:0,speed:2.3,baseDmg:5,projScale:.9,cdMult:.85,regen:0,shieldRegen:0,orbCount:0,xpRadius:95,extraKnives:0,maxMana:80,mana:80,manaRegen:7,vampiric:0,critChance:0,weapons:[{name:'Fireball',emoji:'🔥',cd:1.1,timer:0,fire:'fireball'},{name:'Rayo',emoji:'⚡',cd:2.8,timer:1.5,fire:'lightning'}]},
-  hunter:{name:'Cazador',emoji:'🏹',hp:65,shield:0,speed:3.1,baseDmg:4,projScale:.8,cdMult:.88,regen:0,shieldRegen:0,orbCount:0,xpRadius:110,extraKnives:1,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'Flecha',emoji:'🏹',cd:.58,timer:0,fire:'arrow'},{name:'Trampa',emoji:'🪤',cd:4.8,timer:2.2,fire:'trap'}]},
-  necro:{name:'Nigromante',emoji:'💀',hp:42,shield:0,speed:2.2,baseDmg:5,projScale:.95,cdMult:.95,regen:0,shieldRegen:0,orbCount:1,xpRadius:95,extraKnives:0,maxMana:100,mana:100,manaRegen:6,vampiric:.04,critChance:0,weapons:[{name:'Maldicion',emoji:'💀',cd:1.4,timer:0,fire:'curse'},{name:'Drenaje',emoji:'🩸',cd:3.4,timer:1.5,fire:'drain'}]},
-  templar:{name:'Templario',emoji:'🕯️',hp:48,shield:0,speed:2.55,baseDmg:5,projScale:1.0,cdMult:.92,regen:0,shieldRegen:0,orbCount:1,xpRadius:100,extraKnives:0,maxMana:40,mana:40,manaRegen:4,vampiric:.03,critChance:.06,weapons:[{name:'Lanza Solar',emoji:'☀️',cd:1.0,timer:0,fire:'spear'},{name:'Libro Sagrado',emoji:'📖',cd:2.0,timer:0.8,fire:'book'}]},
-  assassin:{name:'Asesina',emoji:'🗡️',hp:36,shield:0,speed:3.35,baseDmg:4,projScale:.78,cdMult:.82,regen:0,shieldRegen:0,orbCount:0,xpRadius:125,extraKnives:2,maxMana:30,mana:30,manaRegen:8,vampiric:0,critChance:.12,weapons:[{name:'Doble Corte',emoji:'🗡️',cd:.5,timer:0,fire:'dashSlash'},{name:'Kunai',emoji:'✨',cd:1.25,timer:0.5,fire:'kunai'}]},
+  knight:{name:'Caballero',emoji:'⚔️',hp:135,shield:0,speed:2.1,baseDmg:7,projScale:1.1,cdMult:1.0,regen:0,shieldRegen:0,orbCount:0,xpRadius:80,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:0,weapons:[{name:'Espada',emoji:'⚔️',cd:.75,timer:0,fire:'sword'},{name:'Escudo',emoji:'🛡',cd:3.8,timer:2,fire:'shieldBurst'}]},
+  mage:{name:'Mago',emoji:'🔮',hp:58,shield:0,speed:2.3,baseDmg:6,projScale:.9,cdMult:.85,regen:0,shieldRegen:0,orbCount:0,xpRadius:95,extraKnives:0,maxMana:80,mana:80,manaRegen:7,vampiric:0,critChance:0,weapons:[{name:'Fireball',emoji:'🔥',cd:1.1,timer:0,fire:'fireball'},{name:'Rayo',emoji:'⚡',cd:2.8,timer:1.5,fire:'lightning'}]},
+  hunter:{name:'Cazador',emoji:'🏹',hp:72,shield:0,speed:3.0,baseDmg:5,projScale:.8,cdMult:.88,regen:0,shieldRegen:0,orbCount:0,xpRadius:110,extraKnives:1,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'Flecha',emoji:'🏹',cd:.58,timer:0,fire:'arrow'},{name:'Trampa',emoji:'🪤',cd:4.8,timer:2.2,fire:'trap'}]},
+  necro:{name:'Nigromante',emoji:'💀',hp:62,shield:0,speed:2.3,baseDmg:5,projScale:.95,cdMult:.95,regen:0,shieldRegen:0,orbCount:1,xpRadius:95,extraKnives:0,maxMana:100,mana:100,manaRegen:6,vampiric:.04,critChance:0,weapons:[{name:'Maldicion',emoji:'💀',cd:1.4,timer:0,fire:'curse'},{name:'Drenaje',emoji:'🩸',cd:3.4,timer:1.5,fire:'drain'}]},
+  templar:{name:'Templario',emoji:'🕯️',hp:82,shield:0,speed:2.5,baseDmg:5,projScale:1.0,cdMult:.92,regen:0,shieldRegen:0,orbCount:1,xpRadius:100,extraKnives:0,maxMana:40,mana:40,manaRegen:4,vampiric:.03,critChance:.06,weapons:[{name:'Lanza Solar',emoji:'☀️',cd:1.0,timer:0,fire:'spear'},{name:'Libro Sagrado',emoji:'📖',cd:2.0,timer:0.8,fire:'book'}]},
+  assassin:{name:'Asesina',emoji:'🗡️',hp:50,shield:0,speed:3.3,baseDmg:5,projScale:.78,cdMult:.82,regen:0,shieldRegen:0,orbCount:0,xpRadius:125,extraKnives:2,maxMana:30,mana:30,manaRegen:8,vampiric:0,critChance:.12,weapons:[{name:'Doble Corte',emoji:'🗡️',cd:.5,timer:0,fire:'dashSlash'},{name:'Kunai',emoji:'✨',cd:1.25,timer:0.5,fire:'kunai'}]},
 };
 
 // Nuevos personajes. Leon: unico con 5 de escudo inicial. Snake: 0 escudo. Ambos 1 de dano base.
-CHARS.leon={name:'Leon',emoji:'\ud83d\udd2b',hp:60,shield:5,speed:2.5,baseDmg:5,projScale:.95,cdMult:.9,regen:0,shieldRegen:0,orbCount:0,xpRadius:100,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.06,weapons:[{name:'Pistola',emoji:'\ud83d\udd2b',cd:.5,timer:0,fire:'handgun'},{name:'Escopeta',emoji:'\ud83d\udca5',cd:1.6,timer:.6,fire:'shotgun'}]};
-CHARS.snake={name:'Snake',emoji:'\ud83d\udeac',hp:55,shield:0,speed:2.6,baseDmg:4,projScale:.9,cdMult:.92,regen:0,shieldRegen:0,orbCount:0,xpRadius:105,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'SOCOM',emoji:'\ud83d\udd2b',cd:.45,timer:0,fire:'handgun'},{name:'Granada',emoji:'\ud83d\udca3',cd:3.0,timer:1,fire:'bomb'}]};
+CHARS.leon={name:'Leon',emoji:'\ud83d\udd2b',hp:78,shield:5,speed:2.5,baseDmg:5,projScale:.95,cdMult:.9,regen:0,shieldRegen:0,orbCount:0,xpRadius:100,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.06,weapons:[{name:'Pistola',emoji:'\ud83d\udd2b',cd:.5,timer:0,fire:'handgun'},{name:'Escopeta',emoji:'\ud83d\udca5',cd:1.6,timer:.6,fire:'shotgun'}]};
+CHARS.snake={name:'Snake',emoji:'\ud83d\udeac',hp:66,shield:0,speed:2.7,baseDmg:5,projScale:.9,cdMult:.92,regen:0,shieldRegen:0,orbCount:0,xpRadius:105,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'SOCOM',emoji:'\ud83d\udd2b',cd:.45,timer:0,fire:'handgun'},{name:'Granada',emoji:'\ud83d\udca3',cd:3.0,timer:1,fire:'bomb'}]};
 
 // Habilidades especiales activas (tecla Q). cd y duracion en frames/seg.
 const SPECIALS={
@@ -806,7 +844,31 @@ function useSpecial(){
 // Dano = baseDmg × dmgBonusMult (acumulacion de %). SIN multiplicadores xN ni escalado por nivel.
 function playerDmgMult(p){return p.dmgBonusMult;}
 
-const WP=[{name:'Daga Triple',emoji:'🗡',cd:.36,fire:'dagger',desc:'3 dagas rapidas'},{name:'Latigo',emoji:'🔗',cd:.95,fire:'whip',desc:'Arco que penetra'},{name:'Bomba',emoji:'💣',cd:3.4,fire:'bomb',desc:'Explosion en area'},{name:'Lanza',emoji:'🪃',cd:1.1,fire:'spear',desc:'Penetra 5 enemigos'},{name:'Libro Arcano',emoji:'📖',cd:1.9,fire:'book',desc:'4 orbes orbitales'}];
+// ===== FASE 3: ARSENAL — muchas armas con estadisticas distintas (dmgPct = % de dano base, tag = sinergia) =====
+const WP=[
+  {name:'Daga Triple',emoji:'🗡',cd:.36,fire:'dagger',dmgPct:150,tag:'blade',desc:'3 dagas rápidas'},
+  {name:'Estoque',emoji:'⚔️',cd:.5,fire:'sword',dmgPct:240,tag:'blade',desc:'Corte veloz'},
+  {name:'Hacha Pesada',emoji:'🪓',cd:1.15,fire:'sword',dmgPct:520,tag:'blade',desc:'Lento pero brutal'},
+  {name:'Látigo',emoji:'🔗',cd:.95,fire:'whip',dmgPct:180,tag:'blade',desc:'Arco que penetra'},
+  {name:'Guadaña',emoji:'☠️',cd:1.05,fire:'whip',dmgPct:320,tag:'blade',desc:'Siega en arco amplio'},
+  {name:'Lanza',emoji:'🪃',cd:1.1,fire:'spear',dmgPct:550,tag:'blade',desc:'Penetra 5 enemigos'},
+  {name:'Jabalina',emoji:'➷',cd:.85,fire:'spear',dmgPct:360,tag:'ranged',desc:'Lanzamiento rápido'},
+  {name:'Arco Largo',emoji:'🏹',cd:.7,fire:'arrow',dmgPct:260,tag:'ranged',desc:'Flechas potentes'},
+  {name:'Ballesta',emoji:'🎯',cd:1.0,fire:'arrow',dmgPct:430,tag:'ranged',desc:'Perfora con fuerza'},
+  {name:'Escopeta',emoji:'🔫',cd:1.4,fire:'shotgun',dmgPct:140,tag:'ranged',desc:'Abanico de perdigones'},
+  {name:'Revólver',emoji:'🔫',cd:.78,fire:'handgun',dmgPct:240,tag:'ranged',desc:'Disparo certero'},
+  {name:'Bola de Fuego',emoji:'🔥',cd:1.1,fire:'fireball',dmgPct:280,tag:'fire',desc:'Proyectil ígneo'},
+  {name:'Bomba',emoji:'💣',cd:3.2,fire:'bomb',dmgPct:800,tag:'fire',desc:'Explosión en área'},
+  {name:'Granada',emoji:'🧨',cd:2.5,fire:'bomb',dmgPct:520,tag:'fire',desc:'Estallido rápido'},
+  {name:'Rayo',emoji:'⚡',cd:2.6,fire:'lightning',dmgPct:400,tag:'storm',desc:'Cadena eléctrica'},
+  {name:'Tormenta',emoji:'🌩',cd:2.2,fire:'lightning',dmgPct:540,tag:'storm',desc:'Relámpago brutal'},
+  {name:'Libro Arcano',emoji:'📖',cd:1.9,fire:'book',dmgPct:130,tag:'arcane',desc:'4 orbes orbitales'},
+  {name:'Grimorio',emoji:'📕',cd:1.6,fire:'book',dmgPct:210,tag:'arcane',desc:'Orbes potentes'},
+  {name:'Orbe Maldito',emoji:'🔮',cd:1.35,fire:'curse',dmgPct:210,tag:'arcane',desc:'Maldición rastreadora'},
+  {name:'Drenaje',emoji:'🩸',cd:3.0,fire:'drain',dmgPct:300,tag:'arcane',desc:'Roba vida en área'},
+  {name:'Kunai',emoji:'✨',cd:1.1,fire:'kunai',dmgPct:150,tag:'blade',desc:'Proyectiles dobles'},
+  {name:'Filo Sagrado',emoji:'🛡',cd:3.6,fire:'shieldBurst',dmgPct:220,tag:'holy',desc:'Onda + escudo'},
+];
 const AP=[
   {name:'Botas de Velocidad',emoji:'👢',rarity:'common',stats:'+10% velocidad',apply:g=>{g.player.speed*=1.10;}},
   {name:'Guantes de Dano',emoji:'🧤',rarity:'common',stats:'+12% dano',apply:g=>{g.player.dmgBonusMult+=.12;}},
@@ -859,6 +921,42 @@ const UPGRADES=[
 ];
 const RC={common:'#aaa',rare:'#8844ff',epic:'#ff6622',legendary:'#ffcc00'};
 const RL={common:'COMUN',rare:'RARO',epic:'EPICO',legendary:'LEGENDARIO'};
+
+// ===== FASE 3: sinergias de arma y sistema de TOMOS =====
+const WTAGS={blade:'⚔️ Hoja',ranged:'🏹 Distancia',fire:'🔥 Fuego',storm:'⚡ Tormenta',arcane:'🔮 Arcano',holy:'✝️ Sagrado'};
+// Dano de arma = baseDmg × (dmgPct/100) × sinergia. Sin multiplicadores xN: todo en porcentajes.
+function wdmg(g,w,defPct,defTag){const p=g.player;const mult=(w&&w.dmgPct!=null?w.dmgPct:defPct)/100;const tag=(w&&w.tag)||defTag;const syn=1+((g.tagBonus&&g.tagBonus[tag])||0);return p.baseDmg*mult*syn;}
+// Gran variedad de tomos; solo 4 equipables. Efectos en % y sinergias por etiqueta de arma.
+const TOMES=[
+  {id:'t_power',ico:'💪',name:'Tomo de Poder',rarity:'common',desc:'+12% daño global',apply:p=>p.dmgBonusMult+=.12},
+  {id:'t_swift',ico:'⏱',name:'Tomo de Celeridad',rarity:'common',desc:'+12% vel. ataque',apply:p=>p.cdMult=Math.max(.25,p.cdMult*.88)},
+  {id:'t_vita',ico:'❤️',name:'Tomo de Vitalidad',rarity:'common',desc:'+20% vida máxima',apply:p=>{const a=~~(p.maxHp*.20);p.maxHp+=a;p.hp+=a;}},
+  {id:'t_wind',ico:'👟',name:'Tomo del Viento',rarity:'common',desc:'+12% velocidad',apply:p=>p.speed*=1.12},
+  {id:'t_reach',ico:'📏',name:'Tomo de Alcance',rarity:'common',desc:'+20% alcance',apply:p=>p.rangeMult=(p.rangeMult||1)+.20},
+  {id:'t_blade',ico:'⚔️',name:'Tomo de Filo',rarity:'rare',desc:'+20% daño a armas de hoja',tagBoost:{blade:.20}},
+  {id:'t_arch',ico:'🏹',name:'Tomo del Arquero',rarity:'rare',desc:'+20% daño a distancia',tagBoost:{ranged:.20}},
+  {id:'t_arcane',ico:'📘',name:'Tomo Arcano',rarity:'rare',desc:'+22% daño arcano',tagBoost:{arcane:.22}},
+  {id:'t_crit',ico:'🎯',name:'Tomo de Precisión',rarity:'rare',desc:'+12% crítico',apply:p=>p.critChance+=.12},
+  {id:'t_orb',ico:'🌀',name:'Tomo del Orbe',rarity:'rare',desc:'+1 orbe orbital',apply:p=>p.orbCount+=1},
+  {id:'t_bastion',ico:'🛡',name:'Tomo de Bastión',rarity:'rare',desc:'+12% resist y +30 escudo',apply:p=>{p.resist=Math.min(.75,(p.resist||0)+.12);p.maxShield+=30;p.shield+=30;}},
+  {id:'t_fire',ico:'🔥',name:'Tomo de Fuego',rarity:'epic',desc:'+28% daño de fuego e incendio',tagBoost:{fire:.28},apply:p=>p.burn+=1},
+  {id:'t_storm',ico:'⚡',name:'Tomo de Tormenta',rarity:'epic',desc:'+32% daño de tormenta',tagBoost:{storm:.32}},
+  {id:'t_holy',ico:'✝️',name:'Tomo Sagrado',rarity:'epic',desc:'+25% daño sagrado y +2 regen',tagBoost:{holy:.25},apply:p=>p.regen+=2},
+  {id:'t_exec',ico:'💢',name:'Tomo del Verdugo',rarity:'epic',desc:'+60% daño crítico',apply:p=>p.critMult=(p.critMult||1.5)+.60},
+  {id:'t_blood',ico:'🧛',name:'Tomo de Sangre',rarity:'epic',desc:'+8% robo de vida',apply:p=>p.vampiric+=.08},
+  {id:'t_multi',ico:'🗡',name:'Tomo de Multiplicidad',rarity:'epic',desc:'+1 proyectil',apply:p=>p.extraKnives+=1},
+  {id:'t_colossus',ico:'🔮',name:'Tomo del Coloso',rarity:'epic',desc:'+30% tamaño proyectil +10% daño',apply:p=>{p.projSizeMult=(p.projSizeMult||1)+.30;p.dmgBonusMult+=.10;}},
+  {id:'t_cataclysm',ico:'💠',name:'Cataclismo',rarity:'legendary',desc:'+20% daño, +1 proyectil, +15% crítico',apply:p=>{p.dmgBonusMult+=.20;p.extraKnives+=1;p.critChance+=.15;}},
+  {id:'t_pact',ico:'🩸',name:'Pacto de Sangre',rarity:'legendary',desc:'+15% robo de vida y +25% daño',apply:p=>{p.vampiric+=.15;p.dmgBonusMult+=.25;}},
+  {id:'t_synergy',ico:'🌟',name:'Sinergia Total',rarity:'legendary',desc:'+14% daño a TODAS las armas',tagBoostAll:.14},
+];
+const TOME_BY={};TOMES.forEach(t=>TOME_BY[t.id]=t);
+const MAX_TOMES=4;
+function applyTomesStats(p){for(const id of (SAVE.equippedTomes||[])){const t=TOME_BY[id];if(t&&t.apply){try{t.apply(p);}catch(e){}}}}
+function computeTagBonus(){const b={};for(const id of (SAVE.equippedTomes||[])){const t=TOME_BY[id];if(!t)continue;if(t.tagBoost)for(const k in t.tagBoost)b[k]=(b[k]||0)+t.tagBoost[k];if(t.tagBoostAll)for(const k in WTAGS)b[k]=(b[k]||0)+t.tagBoostAll;}return b;}
+function toggleTome(id){const arr=SAVE.equippedTomes||(SAVE.equippedTomes=[]);const i=arr.indexOf(id);if(i>=0)arr.splice(i,1);else{if(arr.length>=MAX_TOMES)return;arr.push(id);}saveProgress();renderTomes();}
+// Escalado de dificultad: sube suave con tiempo, oleadas, overtime y bioma.
+function diffScale(g){return g.diff*g.overTimeMult*(1+g.time/300*0.6+g.waveNum*0.015);}
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function flashScreen(col){if(!SETTINGS.screenFx)return;const el=document.getElementById('scf');el.style.background=col||'#fff';el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),55);}
@@ -991,13 +1089,14 @@ function initGame(ck,mapIdx,carryPlayer,veteran){
     const p=persistentPlayer;
     p.x=WS/2+(Math.random()-.5)*150;p.y=WHS/2+(Math.random()-.5)*150;p.invincibleTimer=200;
     p.hp=Math.min(p.maxHp,Math.max(p.maxHp*.4,p.hp));p.shield=Math.min(p.maxShield,p.shield+p.maxShield*.4);p.mana=p.maxMana;
-  }else{persistentPlayer=makePlayer(ck);applySkin(persistentPlayer);
+  }else{persistentPlayer=makePlayer(ck);applySkin(persistentPlayer);applyTomesStats(persistentPlayer);
     // CONTINUAR: bonus de veterano para empezar en un bioma avanzado de forma jugable.
     if(veteran&&mapIdx>0){const p=persistentPlayer,boost=1+mapIdx*0.55;p.maxHp=~~(p.maxHp*boost);p.hp=p.maxHp;p.maxShield=~~(p.maxShield*boost);p.shield=p.maxShield;p.baseDmg*=boost;p.level=1+mapIdx*3;p.xpNext=~~(80*Math.pow(1.40,mapIdx*3));}
   }
   if(!persistentPlayer._weapons)persistentPlayer._weapons=cloneW(ck);
   G={running:true,paused:false,time:0,kills:0,coinCount:0,cam:{x:persistentPlayer.x-GW/2,y:persistentPlayer.y-GH/2},mapDef:md,diff:md.diffMult,player:persistentPlayer,weapons:persistentPlayer._weapons,enemies:[],projs:[],parts:[],gems:[],coinItems:[],pickups:[],traps:[],keys:{},spawnTimer:0,spawnRate:2.6,wave:1,shake:0,b1Spawned:false,b2Spawned:false,bfSpawned:false,bfKilled:false,portal,chests,totems:generateTotems(),nearTotem:null,curBoss:null,waveTimer:0,waveNum:1,overTime:false,overTimeMult:1.0,overTimeTimer:0,nearPortal:false,nearChest:null,minimapOpen:false,runKills:0,runCoins:0,runChests:0,runDmgTaken:0,misTimer:0};
   renderWS();document.getElementById('char-ind').textContent=CHARS[ck].emoji+' '+CHARS[ck].name.toUpperCase();document.getElementById('map-hud').textContent=md.emoji+' '+md.name;updateIntroMapPreview();
+  G.tagBonus=computeTagBonus();
 }
 
 function updateIntroMapPreview(){const ul=(typeof SAVE!=='undefined'&&SAVE.unlockedMaps)?SAVE.unlockedMaps:[0];document.querySelectorAll('#menu-maps .mc').forEach((el,i)=>{el.className='mc'+(ul.includes(i)?(i===Math.max(...ul)?' active':' unlocked'):' locked');});}
@@ -1043,12 +1142,12 @@ function spawnWave(g,count){
     x=Math.max(50,Math.min(WS-50,x));y=Math.max(50,Math.min(WHS-50,y));
     const elite=Math.random()<.07&&g.time>30; // enemigos especiales ocasionales
     const em=elite?2.2:1;
-    const mult=g.diff*g.overTimeMult,hp=~~((et.hp+g.waveNum*4.5)*mult*em);
+    const mult=diffScale(g),hp=~~((et.hp+g.waveNum*4.5)*mult*em);
     g.enemies.push({x,y,w:et.w*(elite?1.35:1),h:et.h*(elite?1.35:1),hp,maxHp:hp,spd:et.spd*(mult*.4+.6),dmg:et.dmg*mult*(elite?1.3:1),xp:et.xp*(elite?3:1),col:elite?'#ff66cc':et.col,name:key,skin:et.skin,hf:0,animTimer:0,animFrame:0,isBoss:false,isFinalBoss:false,elite});
   }
 }
 function spawnBossE(g,bdef,isFinal){
-  const mult=g.diff*g.overTimeMult,hp=~~(bdef.hp*mult);
+  const mult=diffScale(g),hp=~~(bdef.hp*mult);
   const e={x:g.cam.x+GW/2+750,y:g.cam.y+GH/2,w:bdef.w,h:bdef.h,hp,maxHp:hp,spd:bdef.spd*(mult*.35+.65),dmg:bdef.dmg*mult,xp:bdef.xp,col:bdef.col,name:bdef.name,skin:bdef.skin,hf:0,animTimer:0,animFrame:0,isBoss:true,isFinalBoss:!!isFinal,phase:1,phaseTimer:0};
   g.enemies.push(e);g.curBoss=e;document.getElementById('boss-bar-wrap').classList.add('show');document.getElementById('boss-name-lbl').textContent='☠ '+bdef.name+' ☠';flashScreen('#ff00ff');annWave('☠ '+bdef.name+' APARECIO!');
 }
@@ -1066,24 +1165,24 @@ function aim(g){const t=nearest(g);return t?Math.atan2(t.y-g.player.y,t.x-g.play
 function calcD(g,base,crit){const p=g.player;let d=base*playerDmgMult(p);return Math.max(1,~~(d*(crit?(p.critMult||1.5):1)));}
 function isCrit(p){return Math.random()<p.critChance;}
 function addP(g,x,y,vx,vy,dmg,life,sc,type,col,crit,extra){const pl=g.player;g.projs.push({x,y,vx,vy,dmg,life:life*(pl.rangeMult||1),scale:sc*(pl.projSizeMult||1),type,col,crit:!!crit,...(extra||{})});}
-function fireSword(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.28,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*8,Math.sin(a)*8,calcD(g,p.baseDmg*2.2,c),75,p.projScale,'sword',c?'#ffff44':'#aaddff',c);}}
-function fireShieldBurst(g){const p=g.player;for(let i=0;i<12;i++){const a=(i/11)*Math.PI*2;addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,p.baseDmg*1.5,false),32,p.projScale*1.2,'shield','#6699ff',false);}p.shield=Math.min(p.maxShield,p.shield+18);}
-function fireFireball(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;if(p.maxMana>0){if(p.mana<12)return;p.mana-=12;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,p.baseDmg*2.8,c),95,p.projScale,'fireball','#ff6600',c);}}
-function fireLightning(g){const p=g.player;if(p.maxMana>0){if(p.mana<28)return;p.mana-=28;}const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);for(let i=0;i<Math.min(4,s.length);i++){const e=s[i],c=isCrit(p),d=calcD(g,p.baseDmg*4,c);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#88aaff',8);spawnDN(e.x,e.y,d,c,false);if(e.hp<=0)killE(g,g.enemies.indexOf(e));}for(let i=0;i<5;i++){const a=aim(g)+(Math.random()-.5)*.8;addP(g,p.x,p.y,Math.cos(a)*10,Math.sin(a)*10,0,10,p.projScale,'lightning','#88ccff',false);}}
-function fireArrow(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.2,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,p.baseDmg*1.8,c),95,p.projScale,'arrow',c?'#ffff44':'#ccaa44',c);}}
-function fireTrap(g){const p=g.player;g.traps.push({x:p.x+(Math.random()-.5)*70,y:p.y+(Math.random()-.5)*70,life:700,dmg:calcD(g,p.baseDmg*4.5,false),flashTimer:0});}
-function fireCurse(g){const p=g.player,a0=aim(g),n=2+p.extraKnives;if(p.maxMana>0){if(p.mana<9)return;p.mana-=9;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.45,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,p.baseDmg*1.9,c),125,p.projScale,'curse','#44ddcc',c);}}
-function fireDrain(g){const p=g.player;const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);let healed=0;for(let i=0;i<Math.min(3,s.length);i++){const e=s[i],d=calcD(g,p.baseDmg*2.8,false);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#44ddcc',5);healed+=d*.42;if(e.hp<=0)killE(g,g.enemies.indexOf(e));}if(healed>0){p.hp=Math.min(p.maxHp,p.hp+healed);spawnDN(p.x,p.y,healed,false,true);}const a0=aim(g);for(let i=0;i<4;i++)addP(g,p.x,p.y,Math.cos(a0+(Math.random()-.5))*6,Math.sin(a0+(Math.random()-.5))*6,0,12,p.projScale,'drain','#44ddcc',false);}
-function fireKunai(g){const p=g.player,a0=aim(g),n=2+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.3,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*13,Math.sin(a)*13,calcD(g,p.baseDmg*1.4,c),70,p.projScale*.8,'dagger',c?'#ffffaa':'#dde2ff',c);}}
-function fireDashSlash(g){const p=g.player,a0=aim(g),n=4+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.5,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*9,Math.sin(a)*9,calcD(g,p.baseDmg*1.8,c),28,p.projScale*1.1,'sword',c?'#ffff66':'#ff88aa',c,{pierce:2});}}
-function fireDagger(g){const p=g.player,a0=aim(g),n=3+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.38,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*11,Math.sin(a)*11,calcD(g,p.baseDmg*1.5,c),60,p.projScale*.8,'dagger',c?'#ffffaa':'#ccccff',c);}}
-function fireWhip(g){const p=g.player,a0=aim(g),n=6+p.extraKnives*2;for(let i=0;i<n;i++){const a=a0+(i/(n-1)-.5)*1.2;addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,p.baseDmg*1.8,false),42,p.projScale*1.1,'whip','#cc8822',false,{pierce:4});}}
-function fireBomb(g){const p=g.player,t=nearest(g);if(!t)return;const c=isCrit(p);addP(g,t.x,t.y,0,0,calcD(g,p.baseDmg*8,c),1,p.projScale*2.6,'bomb','#ff8800',c,{explode:true});}
-function fireSpear(g){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*14,Math.sin(a0)*14,calcD(g,p.baseDmg*5.5,c),110,p.projScale*1.4,'spear',c?'#ffffaa':'#ddaa44',c,{pierce:5});}
-function fireBook(g){const p=g.player,n=4+p.extraKnives,T2=Date.now();for(let i=0;i<n;i++){const a=T2/800+i*(Math.PI*2/n);g.projs.push({x:p.x+Math.cos(a)*55,y:p.y+Math.sin(a)*55,vx:0,vy:0,dmg:calcD(g,p.baseDmg*1.3,false),life:45,scale:p.projScale,type:'book',col:'#ff88ff',crit:false,orbit:true,orbitR:55,orbitA:a,orbitSpd:.045});}}
+function fireSword(g,w){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.28,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*8,Math.sin(a)*8,calcD(g,wdmg(g,w,220,'blade'),c),75,p.projScale,'sword',c?'#ffff44':'#aaddff',c);}}
+function fireShieldBurst(g,w){const p=g.player;for(let i=0;i<12;i++){const a=(i/11)*Math.PI*2;addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,wdmg(g,w,150,'holy'),false),32,p.projScale*1.2,'shield','#6699ff',false);}p.shield=Math.min(p.maxShield,p.shield+18);}
+function fireFireball(g,w){const p=g.player,a0=aim(g),n=1+p.extraKnives;if(p.maxMana>0){if(p.mana<12)return;p.mana-=12;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,wdmg(g,w,280,'fire'),c),95,p.projScale,'fireball','#ff6600',c);}}
+function fireLightning(g,w){const p=g.player;if(p.maxMana>0){if(p.mana<28)return;p.mana-=28;}const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);for(let i=0;i<Math.min(4,s.length);i++){const e=s[i],c=isCrit(p),d=calcD(g,wdmg(g,w,400,'storm'),c);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#88aaff',8);spawnDN(e.x,e.y,d,c,false);if(e.hp<=0)killE(g,g.enemies.indexOf(e));}for(let i=0;i<5;i++){const a=aim(g)+(Math.random()-.5)*.8;addP(g,p.x,p.y,Math.cos(a)*10,Math.sin(a)*10,0,10,p.projScale,'lightning','#88ccff',false);}}
+function fireArrow(g,w){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.2,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,wdmg(g,w,180,'ranged'),c),95,p.projScale,'arrow',c?'#ffff44':'#ccaa44',c);}}
+function fireTrap(g,w){const p=g.player;g.traps.push({x:p.x+(Math.random()-.5)*70,y:p.y+(Math.random()-.5)*70,life:700,dmg:calcD(g,wdmg(g,w,450,'ranged'),false),flashTimer:0});}
+function fireCurse(g,w){const p=g.player,a0=aim(g),n=2+p.extraKnives;if(p.maxMana>0){if(p.mana<9)return;p.mana-=9;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.45,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,wdmg(g,w,190,'arcane'),c),125,p.projScale,'curse','#44ddcc',c);}}
+function fireDrain(g,w){const p=g.player;const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);let healed=0;for(let i=0;i<Math.min(3,s.length);i++){const e=s[i],d=calcD(g,wdmg(g,w,280,'arcane'),false);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#44ddcc',5);healed+=d*.42;if(e.hp<=0)killE(g,g.enemies.indexOf(e));}if(healed>0){p.hp=Math.min(p.maxHp,p.hp+healed);spawnDN(p.x,p.y,healed,false,true);}const a0=aim(g);for(let i=0;i<4;i++)addP(g,p.x,p.y,Math.cos(a0+(Math.random()-.5))*6,Math.sin(a0+(Math.random()-.5))*6,0,12,p.projScale,'drain','#44ddcc',false);}
+function fireKunai(g,w){const p=g.player,a0=aim(g),n=2+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.3,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*13,Math.sin(a)*13,calcD(g,wdmg(g,w,140,'blade'),c),70,p.projScale*.8,'dagger',c?'#ffffaa':'#dde2ff',c);}}
+function fireDashSlash(g,w){const p=g.player,a0=aim(g),n=4+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.5,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*9,Math.sin(a)*9,calcD(g,wdmg(g,w,180,'blade'),c),28,p.projScale*1.1,'sword',c?'#ffff66':'#ff88aa',c,{pierce:2});}}
+function fireDagger(g,w){const p=g.player,a0=aim(g),n=3+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.38,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*11,Math.sin(a)*11,calcD(g,wdmg(g,w,150,'blade'),c),60,p.projScale*.8,'dagger',c?'#ffffaa':'#ccccff',c);}}
+function fireWhip(g,w){const p=g.player,a0=aim(g),n=6+p.extraKnives*2;for(let i=0;i<n;i++){const a=a0+(i/(n-1)-.5)*1.2;addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,wdmg(g,w,180,'blade'),false),42,p.projScale*1.1,'whip','#cc8822',false,{pierce:4});}}
+function fireBomb(g,w){const p=g.player,t=nearest(g);if(!t)return;const c=isCrit(p);addP(g,t.x,t.y,0,0,calcD(g,wdmg(g,w,800,'fire'),c),1,p.projScale*2.6,'bomb','#ff8800',c,{explode:true});}
+function fireSpear(g,w){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*14,Math.sin(a0)*14,calcD(g,wdmg(g,w,550,'blade'),c),110,p.projScale*1.4,'spear',c?'#ffffaa':'#ddaa44',c,{pierce:5});}
+function fireBook(g,w){const p=g.player,n=4+p.extraKnives,T2=Date.now();for(let i=0;i<n;i++){const a=T2/800+i*(Math.PI*2/n);g.projs.push({x:p.x+Math.cos(a)*55,y:p.y+Math.sin(a)*55,vx:0,vy:0,dmg:calcD(g,wdmg(g,w,130,'arcane'),false),life:45,scale:p.projScale,type:'book',col:'#ff88ff',crit:false,orbit:true,orbitR:55,orbitA:a,orbitSpd:.045});}}
 // Armas de fuego de Leon/Snake
-function fireHandgun(g){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*15,Math.sin(a0)*15,calcD(g,p.baseDmg*2.2,c),80,p.projScale*.8,'arrow',c?'#ffff66':'#ffe080',c);spawnPs(g,p.x+Math.cos(a0)*14,p.y+Math.sin(a0)*14,'#ffcc66',3);}
-function fireShotgun(g){const p=g.player,a0=aim(g),n=5+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.16,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,p.baseDmg*1.3,c),34,p.projScale*.7,'arrow',c?'#ffff66':'#ffbb55',c);}flashScreen('#ffaa44');}
+function fireHandgun(g,w){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*15,Math.sin(a0)*15,calcD(g,wdmg(g,w,220,'ranged'),c),80,p.projScale*.8,'arrow',c?'#ffff66':'#ffe080',c);spawnPs(g,p.x+Math.cos(a0)*14,p.y+Math.sin(a0)*14,'#ffcc66',3);}
+function fireShotgun(g,w){const p=g.player,a0=aim(g),n=5+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.16,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,wdmg(g,w,130,'ranged'),c),34,p.projScale*.7,'arrow',c?'#ffff66':'#ffbb55',c);}flashScreen('#ffaa44');}
 const FIRES={sword:fireSword,shieldBurst:fireShieldBurst,fireball:fireFireball,lightning:fireLightning,arrow:fireArrow,trap:fireTrap,curse:fireCurse,drain:fireDrain,dagger:fireDagger,whip:fireWhip,bomb:fireBomb,spear:fireSpear,book:fireBook,kunai:fireKunai,dashSlash:fireDashSlash,handgun:fireHandgun,shotgun:fireShotgun};
 
 function spawnPs(g,x,y,col,n=5){if(!SETTINGS.particles)return;if(g.parts.length>520)return;for(let i=0;i<~~(n*.8);i++){const a=Math.random()*Math.PI*2,s=.8+Math.random()*4.2;g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,size:3+~~(Math.random()*5),life:24+~~(Math.random()*24),maxLife:48});}}
@@ -1262,7 +1361,7 @@ function fillReveal(rw,cost){
 }
 function applyChestReward(rw){
   if(!G)return;
-  if(rw.kind==='weapon'){const w=rw.weapon;if(G.weapons.length<4)G.weapons.push({name:w.name,emoji:w.emoji,cd:w.cd,timer:0,fire:w.fire});else G.weapons[G.weapons.length-1]={name:w.name,emoji:w.emoji,cd:w.cd,timer:0,fire:w.fire};renderWS();}
+  if(rw.kind==='weapon'){const w=rw.weapon;const nw={name:w.name,emoji:w.emoji,cd:w.cd,timer:0,fire:w.fire,dmgPct:w.dmgPct,tag:w.tag};if(G.weapons.length<4)G.weapons.push(nw);else G.weapons[G.weapons.length-1]=nw;renderWS();}
   else{try{rw.item.apply(G);}catch(e){}}
 }
 function openChest(g,chest){
@@ -1355,7 +1454,7 @@ function update(ts){
   G.waveTimer+=dt;if(G.waveTimer>=CONFIG.WAVE_EVERY){G.waveTimer=0;G.waveNum++;G.wave=G.waveNum;const cnt=3+~~(G.waveNum*.8);spawnWave(G,cnt);annWave('OLA '+G.waveNum+' — '+cnt+' enemigos');}
   G.spawnTimer+=dt;if(G.spawnTimer>=Math.max(.22,G.spawnRate-G.time*.003-p.level*.01)){G.spawnTimer=0;spawnWave(G,1+~~(G.time/42)+~~(p.level/7));}
   // Weapons
-  for(const w of G.weapons){w.timer-=dt;if(w.timer<=0){w.timer=w.cd*p.cdMult;if(FIRES[w.fire])FIRES[w.fire](G);}}
+  for(const w of G.weapons){w.timer-=dt;if(w.timer<=0){w.timer=w.cd*p.cdMult;if(FIRES[w.fire])FIRES[w.fire](G,w);}}
   // Projectiles
   for(let i=G.projs.length-1;i>=0;i--){const pr=G.projs[i];if(pr.orbit){pr.orbitA+=pr.orbitSpd;pr.x=p.x+Math.cos(pr.orbitA)*pr.orbitR;pr.y=p.y+Math.sin(pr.orbitA)*pr.orbitR;}else{const _pm=GAME_SPEED*(pr.fromBoss?1:(p.projSpeedMult||1));pr.x+=pr.vx*_pm;pr.y+=pr.vy*_pm;}pr.life--;if(pr.life<=0){if(pr.explode)explodeBomb(G,pr);G.projs.splice(i,1);continue;}if(pr.fromBoss){if(overlap(pr.x,pr.y,6,6,p.x,p.y,p.w,p.h)){damageP(G,pr.dmg);G.projs.splice(i,1);}continue;}let hit=false;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(!overlap(pr.x,pr.y,6*pr.scale,6*pr.scale,e.x,e.y,e.w,e.h))continue;if(pr.dmg>0){e.hp-=pr.dmg;e.hf=8;spawnPs(G,e.x,e.y,'#ff4444',6);spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(p.burn>0){e.burnT=120;e.burnDmg=(p.baseDmg*playerDmgMult(p))*.25*p.burn;}if(p.vampiric>0)p.hp=Math.min(p.maxHp,p.hp+pr.dmg*p.vampiric);if(e.hp<=0){killE(G,j);continue;}}if(pr.pierce&&pr.pierce>0)pr.pierce--;else if(!['shield','lightning','drain','whip'].includes(pr.type)&&!pr.orbit){hit=true;break;}}if(hit)G.projs.splice(i,1);}
   // Traps
@@ -1442,7 +1541,7 @@ function gameOver(){
 
 function fullReset(){
   persistentPlayer=null;unlockedMaps=[0];curMapIdx=0;chestsOpened=0;chestPending=null;totemPending=null;
-  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
+  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov','tome-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
   document.getElementById('boss-bar-wrap').classList.remove('show');hideEPr();updateIntroMapPreview();
 }
 
@@ -1548,6 +1647,40 @@ document.getElementById('btn-missions').onclick=()=>{renderMissions();document.g
 document.getElementById('mis-close').onclick=()=>document.getElementById('mis-ov').classList.remove('show');
 document.getElementById('btn-skins').onclick=()=>{renderSkinGrid();document.getElementById('skin-ov').classList.add('show');};
 document.getElementById('skin-close').onclick=()=>document.getElementById('skin-ov').classList.remove('show');
+
+// ============================================================
+//   FASE 3 — Cableado de Tomos y Arsenal
+// ============================================================
+function renderTomes(){
+  const eq=SAVE.equippedTomes||(SAVE.equippedTomes=[]);
+  const slots=document.getElementById('tome-slots');slots.innerHTML='';
+  for(let i=0;i<MAX_TOMES;i++){const id=eq[i],t=id?TOME_BY[id]:null;const d=document.createElement('div');d.className='tome-slot'+(t?' filled':'');
+    if(t){d.style.setProperty('--rc',RC2[t.rarity]);d.innerHTML=t.ico+'<span class="ts-x">×</span>';d.title=t.name;d.onclick=()=>toggleTome(id);}else d.textContent='+';
+    slots.appendChild(d);}
+  const grid=document.getElementById('tome-grid');grid.innerHTML='';
+  TOMES.forEach(t=>{const on=eq.includes(t.id),full=eq.length>=MAX_TOMES&&!on;
+    const c=document.createElement('div');c.className='tome-card r-'+t.rarity+(on?' equipped':'')+(full?' disabled':'');c.style.setProperty('--rc',RC2[t.rarity]);
+    const syn=t.tagBoost?('🔗 '+Object.keys(t.tagBoost).map(k=>WTAGS[k]).join(', ')):(t.tagBoostAll?'🔗 TODAS las armas':'');
+    c.innerHTML='<div class="tc-top"><span class="tc-ico">'+t.ico+'</span><div><div class="tc-nm">'+t.name+'</div><div class="tc-rar">'+RL2[t.rarity]+'</div></div></div><div class="tc-desc">'+t.desc+'</div>'+(syn?'<div class="tc-syn">'+syn+'</div>':'')+(on?'<div class="tc-syn" style="color:#ffd24a">EQUIPADO ✔</div>':'');
+    if(!full||on)c.onclick=()=>toggleTome(t.id);grid.appendChild(c);});
+}
+function renderWeaponsCodex(){
+  const list=document.getElementById('wpx-list');list.innerHTML='';
+  WP.forEach(w=>{const r=document.createElement('div');r.className='wpx-row';
+    r.innerHTML='<span class="wpx-ico">'+w.emoji+'</span><span class="wpx-nm">'+w.name+'<span class="wtag">'+(WTAGS[w.tag]||w.tag)+'</span></span><span class="wpx-st">⚔ '+w.dmgPct+'% · ⏱ '+w.cd+'s</span>';
+    list.appendChild(r);});
+}
+function showTomeTab(weapons){
+  document.getElementById('tome-grid').style.display=weapons?'none':'';
+  document.getElementById('tome-slots').style.display=weapons?'none':'';
+  document.getElementById('wpx-list').style.display=weapons?'':'none';
+  document.getElementById('tab-tomes').className='tgl '+(weapons?'off':'on');
+  document.getElementById('tab-weapons').className='tgl '+(weapons?'on':'off');
+}
+document.getElementById('btn-tomes').onclick=()=>{renderTomes();renderWeaponsCodex();showTomeTab(false);document.getElementById('tome-ov').classList.add('show');};
+document.getElementById('tome-close').onclick=()=>document.getElementById('tome-ov').classList.remove('show');
+document.getElementById('tab-tomes').onclick=()=>showTomeTab(false);
+document.getElementById('tab-weapons').onclick=()=>showTomeTab(true);
 
 // Inicializacion Fase 1: cargar ajustes y progreso guardados.
 loadSettings();loadSave();applySettings();renderOptions();updateContinueBtn();renderSkinStrip();
