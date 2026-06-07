@@ -311,6 +311,21 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .wpx-row .wpx-ico{font-size:18px;}
 .wpx-row .wpx-nm{flex:1;color:#fff;}
 .wpx-row .wpx-st{color:#9fd;font-size:6px;}
+/* ===== FASE 5: pulido de UI (brillos, flujo, ornamentos) ===== */
+.bf::before{content:'';position:absolute;top:0;bottom:0;width:38px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);animation:barShine 2.8s linear infinite;pointer-events:none;}
+@keyframes barShine{0%{left:-40px;}60%{left:120%;}100%{left:120%;}}
+#hp-b{box-shadow:0 0 10px rgba(255,48,64,.4),inset 0 -2px 0 rgba(0,0,0,.3);}
+#xp-b{background:linear-gradient(90deg,#3a0a88,#6622cc,#9944ff,#6622cc,#3a0a88);background-size:220% 100%;animation:xpFlow 3.2s linear infinite;box-shadow:0 0 9px rgba(150,68,255,.4);}
+@keyframes xpFlow{0%{background-position:0 0;}100%{background-position:220% 0;}}
+#mn-b{box-shadow:0 0 8px rgba(40,110,255,.4);}
+.ovl-panel{position:relative;}
+.ovl-panel::before,.ovl-panel::after{content:'';position:absolute;width:14px;height:14px;border:2px solid var(--gold);opacity:.7;pointer-events:none;}
+.ovl-panel::before{top:5px;left:5px;border-right:none;border-bottom:none;}
+.ovl-panel::after{bottom:5px;right:5px;border-left:none;border-top:none;}
+.menu-btn,.pause-btn{position:relative;overflow:hidden;}
+.menu-btn::after{content:'';position:absolute;top:0;left:-60%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transform:skewX(-20deg);transition:left .5s;pointer-events:none;}
+.menu-btn:hover::after{left:130%;}
+#minimap-canvas{box-shadow:0 0 30px rgba(120,60,180,.4),inset 0 0 20px rgba(0,0,0,.6);border-image:linear-gradient(135deg,var(--gold),#7a3aff,var(--gold)) 1;}
 </style>
 </head>
 
@@ -562,6 +577,8 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div class="opt-row"><span class="opt-lbl">Sonido (SFX)</span><div class="opt-ctrl"><button class="tgl" data-tgl="sfx">ON</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Sacudida / flash de pantalla</span><div class="opt-ctrl"><button class="tgl" data-tgl="screenFx">ON</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Partículas</span><div class="opt-ctrl"><button class="tgl" data-tgl="particles">ON</button></div></div>
+    <div class="opt-row"><span class="opt-lbl">Iluminación dinámica</span><div class="opt-ctrl"><button class="tgl" data-tgl="lighting">ON</button></div></div>
+    <div class="opt-row"><span class="opt-lbl">Clima y ambiente</span><div class="opt-ctrl"><button class="tgl" data-tgl="weather">ON</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Números de daño</span><div class="opt-ctrl"><button class="tgl" data-tgl="dmgNumbers">ON</button></div></div>
     <div class="opt-sec">INTERFAZ (HUD)</div>
     <div class="opt-row"><span class="opt-lbl">Mostrar FPS</span><div class="opt-ctrl"><button class="tgl" data-tgl="showFps">OFF</button></div></div>
@@ -602,7 +619,7 @@ let GAME_SPEED=CONFIG.GAME_SPEED; // 0.42 = ~44% mas lento que antes; movimiento
    SAVE guarda el progreso (biomas desbloqueados, heroe, records).
    ============================================================ */
 const SPEED_OPTS=[{k:'muy_lento',lbl:'MUY LENTO',v:0.30},{k:'lento',lbl:'LENTO',v:0.36},{k:'normal',lbl:'NORMAL',v:0.42},{k:'rapido',lbl:'RAPIDO',v:0.52},{k:'muy_rapido',lbl:'MUY RAPIDO',v:0.62}];
-const DEFAULT_SETTINGS={speed:'normal',sfx:true,screenFx:true,particles:true,dmgNumbers:true,showFps:false,hudScale:1.0,hudTop:true,hudBottom:true};
+const DEFAULT_SETTINGS={speed:'normal',sfx:true,screenFx:true,particles:true,dmgNumbers:true,showFps:false,hudScale:1.0,hudTop:true,hudBottom:true,lighting:true,weather:true};
 const SK_SET='bloodrite_settings_v1',SK_SAVE='bloodrite_save_v1';
 let SETTINGS={...DEFAULT_SETTINGS};
 let SAVE={unlockedMaps:[0],lastChar:null,bestLevel:0,totalKills:0,totalCoins:0,runs:0,bestMap:0,
@@ -692,12 +709,47 @@ function blendFloor(wx,wy){
   return`rgb(${~~r},${~~g2},${~~b2})`;
 }
 
-const WDECO=[],WSTONES=[],WWATER=[];
+const WDECO=[],WSTONES=[],WWATER=[],WGRASS=[],WTORCH=[],WFLORA=[];
 (function(){
   for(let i=0;i<1400;i++){const x=Math.random()*WS,y=Math.random()*WHS;WDECO.push({x,y,type:~~(Math.random()*6),sz:8+Math.random()*20,al:.18+Math.random()*.28,biome:~~(Math.random()*4)});}
   for(let i=0;i<420;i++)WSTONES.push({x:Math.random()*WS,y:Math.random()*WHS,w:3+~~(Math.random()*9),h:2+~~(Math.random()*6),al:.2+Math.random()*.3});
   for(let i=0;i<32;i++)WWATER.push({x:Math.random()*WS,y:Math.random()*WHS,rx:20+Math.random()*38,ry:10+Math.random()*20,biome:~~(Math.random()*4)});
+  // FASE 5: hierba/follaje animado (sway), antorchas con luz, y flora/cristales -> mapas vivos sin zonas vacias
+  for(let i=0;i<5200;i++){const x=Math.random()*WS,y=Math.random()*WHS;WGRASS.push({x,y,h:5+Math.random()*9,ph:Math.random()*6.28,bm:getBiome(x,y),k:Math.random()});}
+  for(let i=0;i<260;i++){const x=Math.random()*WS,y=Math.random()*WHS;WTORCH.push({x,y,ph:Math.random()*6.28,bm:getBiome(x,y)});}
+  for(let i=0;i<900;i++){const x=Math.random()*WS,y=Math.random()*WHS;WFLORA.push({x,y,ph:Math.random()*6.28,sz:6+Math.random()*10,t:~~(Math.random()*3),bm:getBiome(x,y)});}
 })();
+// Identidad visual por bioma: color de luz ambiental, viñeta tintada, clima y paleta de partículas.
+const BIOME_FX=[
+  {light:'#bfffa0',amb:'rgba(40,90,30,0.16)',vig:'rgba(4,14,4,0.46)',weather:'leaf',wcol:'#5aa838',mote:'#bfff88',torch:'#ffcc55',grass:['#2e7a26','#3a9a30','#46b03a']},
+  {light:'#ffe9a0',amb:'rgba(150,110,30,0.16)',vig:'rgba(20,12,2,0.44)',weather:'sand',wcol:'#d8c074',mote:'#ffe9a0',torch:'#ffbb44',grass:['#8a7838','#9a8642','#b09a4a']},
+  {light:'#c79bff',amb:'rgba(70,30,110,0.20)',vig:'rgba(6,2,16,0.56)',weather:'fog',wcol:'#6a5a8a',mote:'#c79bff',torch:'#9b6bff',grass:['#3a2c52','#4a3a62','#322444']},
+  {light:'#ff7a55',amb:'rgba(150,20,10,0.22)',vig:'rgba(14,1,1,0.52)',weather:'ember',wcol:'#ff5522',mote:'#ff9955',torch:'#ff6622',grass:['#5a1a10','#6a221a','#7a2a1a']},
+];
+// Sprites de glow cacheados (luz aditiva eficiente para 60 FPS).
+const _glowCache={};
+function glowSprite(col){if(_glowCache[col])return _glowCache[col];const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,col);g.addColorStop(.35,col);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);_glowCache[col]=c;return c;}
+function light(sx,sy,r,col,a){const sp=glowSprite(col);const pa=ctx.globalAlpha;ctx.globalAlpha=a;ctx.drawImage(sp,sx-r,sy-r,r*2,r*2);ctx.globalAlpha=pa;}
+const PROJ_LIGHT={fireball:'#ff7722',bomb:'#ff8800',lightning:'#88ccff',spear:'#ffe066',curse:'#cc66ff',book:'#ff88ff',drain:'#44ddcc',sword:'#aaddff',arrow:'#ffe080',dagger:'#cce0ff',whip:'#ffaa44',shield:'#66aaff',boss_shot:'#ff3366'};
+// Flora detallada: flores, cristales y huesos segun bioma.
+function drawFlora(fl,sx,sy,T){const s=fl.sz,bm=fl.bm,sway=Math.sin(T/650+fl.ph)*2;ctx.save();ctx.translate(sx,sy);
+  if(fl.t===0){ // flor con tallo
+    ctx.fillStyle=bm===3?'#5a1a10':'#2e6a26';ctx.fillRect(-1,-~~s,2,~~s);
+    const pc=['#ff5577','#ffcc44','#cc66ff','#ff8844'][bm];ctx.fillStyle=pc;ctx.fillRect(~~(-3+sway),-~~s-4,3,3);ctx.fillRect(~~(1+sway),-~~s-4,3,3);ctx.fillRect(~~(-1+sway),-~~s-6,2,3);ctx.fillRect(~~(-1+sway),-~~s-1,2,3);ctx.fillStyle='#ffe066';ctx.fillRect(~~(-1+sway),-~~s-3,2,2);
+  }else if(fl.t===1){ // cristal (brilla en cementerio/infierno)
+    const cc=['#5ad8a8','#ffd27a','#c79bff','#ff8a5a'][bm];ctx.globalAlpha*=.92;ctx.fillStyle=cc;ctx.beginPath();ctx.moveTo(0,-~~s);ctx.lineTo(~~(s*.34),-~~(s*.4));ctx.lineTo(~~(s*.2),0);ctx.lineTo(~~(-s*.2),0);ctx.lineTo(~~(-s*.34),-~~(s*.4));ctx.closePath();ctx.fill();ctx.fillStyle='#ffffff';ctx.globalAlpha*=.5+Math.sin(T/300+fl.ph)*.3;ctx.fillRect(-1,-~~(s*.6),2,~~(s*.4));
+  }else{ // huesos / piedra
+    ctx.fillStyle=bm===2?'#cdbfae':'#7a6e5e';ctx.fillRect(-~~(s*.4),-3,~~(s*.8),3);ctx.fillRect(-~~(s*.4),-5,2,4);ctx.fillRect(~~(s*.4)-2,-5,2,4);ctx.fillRect(-~~(s*.4),-1,2,4);ctx.fillRect(~~(s*.4)-2,-1,2,4);
+  }
+  ctx.restore();
+}
+// Antorcha con llama animada (su luz se anade en drawLights).
+function drawTorch(tc,sx,sy,T){ctx.save();ctx.translate(sx,sy);
+  ctx.fillStyle='#3a2410';ctx.fillRect(-2,-14,4,18);ctx.fillStyle='#22150a';ctx.fillRect(-3,-16,6,4);
+  const fl=Math.sin(T/90+tc.ph),fc=BIOME_FX[tc.bm].torch;ctx.globalAlpha=.9;
+  ctx.fillStyle='#ff3300';ctx.fillRect(-3,-24+~~(fl*.8),6,9);ctx.fillStyle=fc;ctx.fillRect(-2,-26+~~(fl),4,8);ctx.fillStyle='#ffee99';ctx.fillRect(-1,-25+~~(fl*1.2),2,5);
+  ctx.globalAlpha=1;ctx.restore();
+}
 
 function drawDecoTile(bm,t,sx,sy){
   const s=t.sz,md=MAPS[bm];ctx.save();ctx.translate(sx,sy);ctx.globalAlpha=t.al;
@@ -719,6 +771,13 @@ function drawMap(camX,camY){
   for(const s of WSTONES){const sx=s.x-camX,sy=s.y-camY;if(sx<-20||sx>CW+20||sy<-20||sy>CH+20)continue;const bw=biomeWeights(s.x,s.y),bi=bw.indexOf(Math.max(...bw));ctx.globalAlpha=s.al;ctx.fillStyle=MAPS[bi].dC;ctx.fillRect(~~sx,~~sy,s.w,s.h);ctx.globalAlpha=1;}
   for(const w of WWATER){const sx=w.x-camX,sy=w.y-camY;if(sx<-60||sx>CW+60||sy<-60||sy>CH+60)continue;const bw=biomeWeights(w.x,w.y);if(bw[w.biome]<.15)continue;ctx.globalAlpha=bw[w.biome]*.6;ctx.fillStyle=MAPS[w.biome].wC;ctx.beginPath();ctx.ellipse(sx,sy,w.rx,w.ry,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
   for(const t of WDECO){const sx=t.x-camX,sy=t.y-camY;if(sx<-60||sx>CW+60||sy<-60||sy>CH+60)continue;const bw=biomeWeights(t.x,t.y);if(bw[t.biome]<.22)continue;ctx.globalAlpha=t.al*bw[t.biome];drawDecoTile(t.biome,t,sx,sy);ctx.globalAlpha=1;}
+  // FASE 5: hierba/flora animada y antorchas -> mapas vivos (bajo toggle de ambiente para 60 FPS)
+  const T5=Date.now();
+  if(SETTINGS.weather){
+  for(const gr of WGRASS){const sx=gr.x-camX,sy=gr.y-camY;if(sx<-12||sx>CW+12||sy<-18||sy>CH+12)continue;const bw=biomeWeights(gr.x,gr.y);if(bw[gr.bm]<.25)continue;const fx=BIOME_FX[gr.bm],col=fx.grass[~~(gr.k*fx.grass.length)],sway=Math.sin(T5/700+gr.ph)*gr.h*.22;ctx.globalAlpha=.5*bw[gr.bm];ctx.fillStyle=col;ctx.fillRect(~~sx,~~(sy-gr.h),2,~~gr.h);ctx.fillRect(~~(sx+sway),~~(sy-gr.h-2),2,3);ctx.globalAlpha=1;}
+  for(const fl of WFLORA){const sx=fl.x-camX,sy=fl.y-camY;if(sx<-20||sx>CW+20||sy<-24||sy>CH+20)continue;const bw=biomeWeights(fl.x,fl.y);if(bw[fl.bm]<.3)continue;ctx.globalAlpha=.62*bw[fl.bm];drawFlora(fl,sx,sy,T5);ctx.globalAlpha=1;}
+  for(const tc of WTORCH){const sx=tc.x-camX,sy=tc.y-camY;if(sx<-20||sx>CW+20||sy<-34||sy>CH+20)continue;const bw=biomeWeights(tc.x,tc.y);if(bw[tc.bm]<.32)continue;drawTorch(tc,sx,sy,T5);}
+  }
   const bxb=WHH-camX;if(bxb>-80&&bxb<CW+80){const g2=ctx.createLinearGradient(bxb-55,0,bxb+55,0);g2.addColorStop(0,'rgba(0,0,0,0)');g2.addColorStop(.5,'rgba(0,0,0,.22)');g2.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g2;ctx.fillRect(bxb-55,0,110,CH);}
   const byb=WHH-camY;if(byb>-80&&byb<CH+80){const g2=ctx.createLinearGradient(0,byb-55,0,byb+55);g2.addColorStop(0,'rgba(0,0,0,0)');g2.addColorStop(.5,'rgba(0,0,0,.22)');g2.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g2;ctx.fillRect(0,byb-55,CW,110);}
   const vg=ctx.createRadialGradient(CW/2,CH/2,CW*.07,CW/2,CH/2,CW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(4,0,8,.4)');ctx.fillStyle=vg;ctx.fillRect(0,0,CW,CH);
@@ -1097,6 +1156,7 @@ function initGame(ck,mapIdx,carryPlayer,veteran){
   G={running:true,paused:false,time:0,kills:0,coinCount:0,cam:{x:persistentPlayer.x-GW/2,y:persistentPlayer.y-GH/2},mapDef:md,diff:md.diffMult,player:persistentPlayer,weapons:persistentPlayer._weapons,enemies:[],projs:[],parts:[],gems:[],coinItems:[],pickups:[],traps:[],keys:{},spawnTimer:0,spawnRate:2.6,wave:1,shake:0,b1Spawned:false,b2Spawned:false,bfSpawned:false,bfKilled:false,portal,chests,totems:generateTotems(),nearTotem:null,curBoss:null,waveTimer:0,waveNum:1,overTime:false,overTimeMult:1.0,overTimeTimer:0,nearPortal:false,nearChest:null,minimapOpen:false,runKills:0,runCoins:0,runChests:0,runDmgTaken:0,misTimer:0};
   renderWS();document.getElementById('char-ind').textContent=CHARS[ck].emoji+' '+CHARS[ck].name.toUpperCase();document.getElementById('map-hud').textContent=md.emoji+' '+md.name;updateIntroMapPreview();
   G.tagBonus=computeTagBonus();
+  G.weather=makeWeather();G.lightT=0;G.lightFlash=0; // FASE 5: clima por bioma
 }
 
 function updateIntroMapPreview(){const ul=(typeof SAVE!=='undefined'&&SAVE.unlockedMaps)?SAVE.unlockedMaps:[0];document.querySelectorAll('#menu-maps .mc').forEach((el,i)=>{el.className='mc'+(ul.includes(i)?(i===Math.max(...ul)?' active':' unlocked'):' locked');});}
@@ -1107,13 +1167,20 @@ function openMinimap(){
   const mc=document.getElementById('minimap-canvas'),mctx=mc.getContext('2d'),S=300,scale=S/WS;
   mctx.clearRect(0,0,S,S);
   for(let x=0;x<S;x+=4){for(let y=0;y<S;y+=4){const wx=x/scale,wy=y/scale;mctx.fillStyle=blendFloor(wx+16,wy+16);mctx.fillRect(x,y,4,4);}}
-  if(G.portal.visible){mctx.fillStyle='#44ffcc';mctx.beginPath();mctx.arc(G.portal.x*scale,G.portal.y*scale,6,0,Math.PI*2);mctx.fill();}
-  for(const ch of G.chests){if(ch.open)continue;mctx.fillStyle='#f0c040';mctx.fillRect(ch.x*scale-3,ch.y*scale-3,6,6);}
-  for(const tt of G.totems){if(tt.used)continue;mctx.fillStyle='#b388ff';mctx.fillRect(tt.x*scale-3,tt.y*scale-3,6,6);}
-  mctx.fillStyle='#ff4444';for(const e of G.enemies)mctx.fillRect(e.x*scale-2,e.y*scale-2,4,4);
-  if(G.curBoss&&G.enemies.includes(G.curBoss)){mctx.fillStyle='#ff44cc';mctx.beginPath();mctx.arc(G.curBoss.x*scale,G.curBoss.y*scale,8,0,Math.PI*2);mctx.fill();}
+  // FASE 5: tinte y etiquetas de bioma + cuadrantes
+  const _bf=[BIOME_FX[0].amb,BIOME_FX[1].amb,BIOME_FX[2].amb,BIOME_FX[3].amb],_bq=[[0,0],[1,0],[0,1],[1,1]],hS=S/2;
+  for(let i=0;i<4;i++){mctx.fillStyle=_bf[i];mctx.fillRect(_bq[i][0]*hS,_bq[i][1]*hS,hS,hS);}
+  mctx.strokeStyle='rgba(255,255,255,.10)';mctx.lineWidth=1;mctx.beginPath();mctx.moveTo(hS,0);mctx.lineTo(hS,S);mctx.moveTo(0,hS);mctx.lineTo(S,hS);mctx.stroke();
+  mctx.font='12px serif';mctx.textAlign='center';mctx.globalAlpha=.7;
+  ['🌲','🏜','⚰','🔥'].forEach((em,i)=>mctx.fillText(em,_bq[i][0]*hS+hS/2,_bq[i][1]*hS+18));mctx.globalAlpha=1;
+  mctx.shadowBlur=8;
+  if(G.portal.visible){mctx.shadowColor='#44ffcc';mctx.fillStyle='#44ffcc';mctx.beginPath();mctx.arc(G.portal.x*scale,G.portal.y*scale,6,0,Math.PI*2);mctx.fill();}
+  mctx.shadowColor='#f0c040';for(const ch of G.chests){if(ch.open)continue;mctx.fillStyle='#f0c040';mctx.fillRect(ch.x*scale-3,ch.y*scale-3,6,6);}
+  mctx.shadowColor='#b388ff';for(const tt of G.totems){if(tt.used)continue;mctx.fillStyle='#b388ff';mctx.fillRect(tt.x*scale-3,tt.y*scale-3,6,6);}
+  mctx.shadowBlur=0;mctx.fillStyle='#ff4444';for(const e of G.enemies)mctx.fillRect(e.x*scale-2,e.y*scale-2,4,4);
+  if(G.curBoss&&G.enemies.includes(G.curBoss)){mctx.shadowBlur=10;mctx.shadowColor='#ff44cc';mctx.fillStyle='#ff44cc';mctx.beginPath();mctx.arc(G.curBoss.x*scale,G.curBoss.y*scale,8,0,Math.PI*2);mctx.fill();mctx.shadowBlur=0;}
   mctx.strokeStyle='rgba(255,255,255,.3)';mctx.lineWidth=1;mctx.strokeRect(G.cam.x*scale,G.cam.y*scale,GW*scale,GH*scale);
-  const p=G.player;mctx.fillStyle='#44ff88';mctx.beginPath();mctx.arc(p.x*scale,p.y*scale,6,0,Math.PI*2);mctx.fill();mctx.strokeStyle='#fff';mctx.lineWidth=2;mctx.beginPath();mctx.arc(p.x*scale,p.y*scale,6,0,Math.PI*2);mctx.stroke();
+  const p=G.player;mctx.shadowBlur=10;mctx.shadowColor='#44ff88';mctx.fillStyle='#44ff88';mctx.beginPath();mctx.arc(p.x*scale,p.y*scale,6,0,Math.PI*2);mctx.fill();mctx.shadowBlur=0;mctx.strokeStyle='#fff';mctx.lineWidth=2;mctx.beginPath();mctx.arc(p.x*scale,p.y*scale,6,0,Math.PI*2);mctx.stroke();
   const t=~~G.time,dm=playerDmgMult(p);
   document.getElementById('st-hp').textContent=~~p.hp+'/'+p.maxHp;
   document.getElementById('st-sh').textContent=~~p.shield+'/'+p.maxShield;
@@ -1185,7 +1252,7 @@ function fireHandgun(g,w){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,
 function fireShotgun(g,w){const p=g.player,a0=aim(g),n=5+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.16,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,wdmg(g,w,130,'ranged'),c),34,p.projScale*.7,'arrow',c?'#ffff66':'#ffbb55',c);}flashScreen('#ffaa44');}
 const FIRES={sword:fireSword,shieldBurst:fireShieldBurst,fireball:fireFireball,lightning:fireLightning,arrow:fireArrow,trap:fireTrap,curse:fireCurse,drain:fireDrain,dagger:fireDagger,whip:fireWhip,bomb:fireBomb,spear:fireSpear,book:fireBook,kunai:fireKunai,dashSlash:fireDashSlash,handgun:fireHandgun,shotgun:fireShotgun};
 
-function spawnPs(g,x,y,col,n=5){if(!SETTINGS.particles)return;if(g.parts.length>520)return;for(let i=0;i<~~(n*.8);i++){const a=Math.random()*Math.PI*2,s=.8+Math.random()*4.2;g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,size:3+~~(Math.random()*5),life:24+~~(Math.random()*24),maxLife:48});}}
+function spawnPs(g,x,y,col,n=5,glow){if(!SETTINGS.particles)return;if(g.parts.length>560)return;for(let i=0;i<~~(n*.8);i++){const a=Math.random()*Math.PI*2,s=.8+Math.random()*4.2;g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,size:3+~~(Math.random()*5),life:24+~~(Math.random()*24),maxLife:48,glow:!!glow});}}
 
 
 function drawE(e,cx,cy){const ex=e.x-cx,ey=e.y-cy;if(ex<-110||ex>GW+110||ey<-110||ey>GH+110)return;ctx.save();ctx.globalAlpha=.26;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(ex,ey+e.h/2-2,e.w*.62,e.w*.3,0,0,Math.PI*2);ctx.fill();ctx.restore();drawES(e,ex,ey,Math.sin(e.animFrame*.35)*1.8,e.hf);if(e.hp<e.maxHp){const bw=e.w+14,bx=ex-bw/2,by=ey-e.h/2-17;px(bx-1,by-1,bw+2,11,'#000');px(bx,by,bw,9,'#1a0000');px(bx,by,~~(bw*e.hp/e.maxHp),9,e.isBoss?'#ff44cc':'#dd2020');if(e.isBoss){pxa(bx,by,~~(bw*e.hp/e.maxHp),4,'#fff',.2);px(bx,by,~~(bw*e.hp/e.maxHp),2,'rgba(255,200,200,.35)');}else pxa(bx,by,~~(bw*e.hp/e.maxHp),2,'#fff',.15);}if(e.hf>0)e.hf--;}
@@ -1196,17 +1263,59 @@ function drawChest(ch,cx,cy){if(ch.open)return;const sx=ch.x-cx,sy=ch.y-cy;if(sx
 function drawTrap(t,cx,cy){const sx=t.x-cx,sy=t.y-cy;const f=t.flashTimer>0;px(sx-8,sy-8,16,16,f?'#ffff44':'#886600');px(sx-6,sy-6,12,12,f?'#ffaa00':'#664400');px(sx-4,sy-4,8,8,f?'#ffee88':'#ffdd00');if(t.flashTimer>0)t.flashTimer--;}
 function drawGem(gem,cx,cy){const gx=gem.x-cx,gy=gem.y-cy,b=Math.sin(Date.now()/280+gem.x)*2;px(gx-5,gy-7+b,10,13,'#5500dd');px(gx-4,gy-7+b,8,11,'#8833ff');px(gx-3,gy-9+b,6,4,'#cc66ff');px(gx-1,gy-6+b,3,4,'#ffffff');}
 function drawPickup(it,cx,cy){const sx=it.x-cx,sy=it.y-cy+Math.sin(it.bob)*2;if(sx<-30||sx>GW+30||sy<-30||sy>GH+30)return;if(it.type==='hp'){px(sx-6,sy-4,12,10,'#5c0d16');px(sx-4,sy-6,4,4,'#ff7a84');px(sx,sy-6,4,4,'#ff7a84');px(sx-2,sy-2,4,8,'#e62a38');px(sx-6,sy-2,12,4,'#e62a38');px(sx-4,sy+2,8,4,'#b81424');}else{px(sx-6,sy-6,12,12,'#143252');px(sx-4,sy-4,8,8,'#55bbff');px(sx-2,sy-2,4,4,'#dff6ff');px(sx-6,sy-1,12,2,'#2b8dc7');px(sx-1,sy-6,2,12,'#2b8dc7');}}
-function drawPart(p,cx,cy){ctx.globalAlpha=p.life/p.maxLife;px(p.x-cx,p.y-cy,p.size,p.size,p.col);ctx.globalAlpha=1;}
+function drawPart(p,cx,cy){const lf=p.life/p.maxLife,sx=p.x-cx,sy=p.y-cy;if(p.glow){const pa=ctx.globalAlpha;ctx.globalCompositeOperation='lighter';ctx.globalAlpha=lf*.85;const r=p.size*2+3;ctx.drawImage(glowSprite(p.col),sx-r,sy-r,r*2,r*2);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=pa;}else{ctx.globalAlpha=lf;const s=Math.max(1,~~(p.size*(.4+lf*.6)));px(sx,sy,s,s,p.col);ctx.globalAlpha=1;}}
+
+// ===== FASE 5: ILUMINACION DINAMICA (glow aditivo cacheado) =====
+function drawLights(g,CX,CY){
+  if(!SETTINGS.lighting)return;const T=Date.now();
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  const p=g.player;light(p.x-CX,p.y-CY-4,118,'#ffe9bb',.16);
+  const sk=SKIN_BY[p.skin];if(sk&&sk.fx!=='none')light(p.x-CX,p.y-CY-4,70,sk.col,.22);
+  // Antorchas (luz calida parpadeante)
+  for(const tc of WTORCH){const sx=tc.x-CX,sy=tc.y-CY;if(sx<-50||sx>GW+50||sy<-50||sy>GH+50)continue;const bw=biomeWeights(tc.x,tc.y);if(bw[tc.bm]<.32)continue;light(sx,sy-12,40+Math.sin(T/110+tc.ph)*6,BIOME_FX[tc.bm].torch,.42*bw[tc.bm]);}
+  // Proyectiles (luz por tipo)
+  let pc=0;for(const pr of g.projs){if(pc>90)break;const lc=PROJ_LIGHT[pr.type];if(!lc)continue;const sx=pr.x-CX,sy=pr.y-CY;if(sx<-40||sx>GW+40||sy<-40||sy>GH+40)continue;light(sx,sy,16*(pr.scale||1)+9,lc,pr.crit?.6:.42);pc++;}
+  // Enemigos: jefes y elites brillan
+  for(const e of g.enemies){const sx=e.x-CX,sy=e.y-CY;if(sx<-70||sx>GW+70||sy<-70||sy>GH+70)continue;if(e.isBoss)light(sx,sy,95,e.col,.26+Math.sin(T/240)*.06);else if(e.elite)light(sx,sy,46,'#ff66cc',.3+Math.sin(T/200)*.12);}
+  // Totems (aura magica)
+  for(const t of g.totems){if(t.used)continue;const sx=t.x-CX,sy=t.y-CY;if(sx<-60||sx>GW+60||sy<-60||sy>GH+60)continue;light(sx,sy-10,42+Math.sin(T/300+t.bob)*7,'#b388ff',.32);}
+  // Cofres (oro; legendario palpita mas)
+  for(const ch of g.chests){if(ch.open)continue;const sx=ch.x-CX,sy=ch.y-CY;if(sx<-60||sx>GW+60||sy<-60||sy>GH+60)continue;const aff=g.coinCount>=getChestCost();light(sx,sy,30+Math.sin(T/240)*7,aff?'#ffcc44':'#553311',aff?.42:.14);}
+  // Portal
+  if(g.portal.visible){const sx=g.portal.x-CX,sy=g.portal.y-CY;if(sx>-90&&sx<GW+90&&sy>-110&&sy<GH+90)light(sx,sy-22,72,g.overTime?'#ff6633':'#44ffcc',.34+Math.sin(T/300)*.08);}
+  ctx.restore();
+}
+// ===== FASE 5: CLIMA / AMBIENTE por bioma =====
+function makeWeather(){const a=[];for(let i=0;i<150;i++)a.push({x:Math.random()*GW,y:Math.random()*GH,v:.3+Math.random(),sz:1+Math.random()*2,ph:Math.random()*6.28});return a;}
+function updateWeather(g,dt){if(!SETTINGS.weather){g.lightFlash=0;return;}const bm=getBiome(g.cam.x+GW/2,g.cam.y+GH/2),k=BIOME_FX[bm].weather,now=performance.now();
+  for(const w of g.weather){
+    if(k==='leaf'){w.x+=Math.sin(w.ph+now/700)*.6+.4;w.y+=w.v*.7;w.ph+=.02;}
+    else if(k==='sand'){w.x+=w.v*4+2;w.y+=Math.sin(w.ph)*.3;w.ph+=.05;}
+    else if(k==='fog'){w.x+=.3+w.v*.3;w.ph+=.006;}
+    else{w.x+=Math.sin(w.ph+now/600)*.4;w.y-=w.v*.8+.5;w.ph+=.03;}
+    if(w.x>GW+12)w.x=-12;if(w.x<-12)w.x=GW+12;if(w.y>GH+12)w.y=-12;if(w.y<-12)w.y=GH+12;
+  }
+  g.lightT=(g.lightT||0)-dt;
+  if(g.lightT<=0){g.lightT=7+Math.random()*11;if((bm===2||bm===3)&&Math.random()<.55)g.lightFlash=1;}
+  if(g.lightFlash>0)g.lightFlash-=dt*3.2;
+}
+function drawWeather(g){if(!SETTINGS.weather)return;const bm=getBiome(g.cam.x+GW/2,g.cam.y+GH/2),fx=BIOME_FX[bm],k=fx.weather,T=Date.now();
+  if(k==='fog'){ctx.save();ctx.globalAlpha=.10;ctx.fillStyle=fx.wcol;for(let i=0;i<6;i++){const fxp=((T/40*(0.4+i*0.1))% (GW+400))-200,fy=(i*GH/6+Math.sin(T/2000+i)*40);ctx.beginPath();ctx.ellipse(fxp,fy,260,90,0,0,6.28);ctx.fill();}ctx.globalAlpha=1;ctx.restore();}
+  else{ctx.save();for(const w of g.weather){ctx.globalAlpha=k==='ember'?.6:.42;ctx.fillStyle=fx.wcol;if(k==='sand')ctx.fillRect(~~w.x,~~w.y,~~(w.sz*3)+2,1);else ctx.fillRect(~~w.x,~~w.y,~~w.sz+1,~~w.sz+1);}ctx.globalAlpha=1;ctx.restore();}
+  if(g.lightFlash>0){ctx.save();ctx.globalAlpha=Math.min(.45,g.lightFlash*.45);ctx.fillStyle=bm===3?'#ff6633':'#bcd4ff';ctx.fillRect(0,0,GW,GH);ctx.restore();}
+}
 
 function drawFrame(){
   ctx.save();if(SETTINGS.screenFx&&G.shake>.5)ctx.translate((Math.random()-.5)*G.shake,(Math.random()-.5)*G.shake);
   const CX=G.cam.x,CY=G.cam.y;drawMap(CX,CY);drawPortal(G.portal,CX,CY,G.overTime);
-  for(const c of G.coinItems)drawCoin(c,CX,CY);for(const c of G.chests)drawChest(c,CX,CY);for(const t of G.totems)drawTotem(t,CX,CY);for(const t of G.traps)drawTrap(t,CX,CY);for(const pk of G.pickups)drawPickup(pk,CX,CY);for(const p of G.parts)drawPart(p,CX,CY);for(const pr of G.projs)drawPR(pr,CX,CY);for(const e of G.enemies)drawE(e,CX,CY);for(const gem of G.gems)drawGem(gem,CX,CY);drawPL(G.player,CX,CY);
+  for(const c of G.coinItems)drawCoin(c,CX,CY);for(const c of G.chests)drawChest(c,CX,CY);for(const t of G.totems)drawTotem(t,CX,CY);for(const t of G.traps)drawTrap(t,CX,CY);for(const pk of G.pickups)drawPickup(pk,CX,CY);for(const p of G.parts)drawPart(p,CX,CY);for(const pr of G.projs)drawPR(pr,CX,CY);for(const e of G.enemies)drawE(e,CX,CY);for(const gem of G.gems)drawGem(gem,CX,CY);drawPL(G.player,CX,CY);drawLights(G,CX,CY);
   if(G.player.hitFlash>0){ctx.save();ctx.globalAlpha=Math.min(.55,G.player.hitFlash/12);ctx.fillStyle='#ff2222';ctx.fillRect(GW/2-18,GH/2-32,36,46);ctx.restore();} // flash rojo sobre el jugador
   if(G.overTime)pxa(0,0,GW,GH,'#cc0000',Math.min(.28,G.overTimeMult*.06)*(.5+Math.sin(Date.now()/500)*.5));
   const _hpf=G.player.hp/Math.max(1,G.player.maxHp);if(_hpf<.30){const a=(.30-_hpf)/.30,rg=ctx.createRadialGradient(GW/2,GH/2,GW*.30,GW/2,GH/2,GW*.62);rg.addColorStop(0,'transparent');rg.addColorStop(1,'rgba(170,0,0,'+(a*(.4+Math.sin(Date.now()/240)*.3)).toFixed(3)+')');ctx.fillStyle=rg;ctx.fillRect(0,0,GW,GH);} // FASE 4: vineta de vida baja
   const lg=ctx.createRadialGradient(GW/2,GH/2,10,GW/2,GH/2,190);lg.addColorStop(0,'rgba(255,240,205,.10)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.fillRect(0,0,GW,GH); // luz ambiental suave alrededor del jugador
-  const vg=ctx.createRadialGradient(GW/2,GH/2,GW*.07,GW/2,GH/2,GW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(4,0,8,.4)');ctx.fillStyle=vg;ctx.fillRect(0,0,GW,GH);ctx.restore();
+  const _bm=getBiome(CX+GW/2,CY+GH/2),_fx=BIOME_FX[_bm];ctx.fillStyle=_fx.amb;ctx.fillRect(0,0,GW,GH); // FASE 5: tinte ambiental del bioma
+  const vg=ctx.createRadialGradient(GW/2,GH/2,GW*.07,GW/2,GH/2,GW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,_fx.vig);ctx.fillStyle=vg;ctx.fillRect(0,0,GW,GH);ctx.restore(); // viñeta tintada por bioma
+  drawWeather(G); // FASE 5: clima/ambiente encima
 }
 
 function overlap(ax,ay,aw,ah,bx,by,bw,bh){return ax-aw/2<bx+bw/2&&ax+aw/2>bx-bw/2&&ay-ah/2<by+bh/2&&ay+ah/2>by-bh/2;}
@@ -1219,12 +1328,12 @@ function killE(g,idx){
   const e=g.enemies[idx];if(!e||idx<0)return;maybeDropSurvival(g,e);
   for(let k=0;k<3;k++)g.gems.push({x:e.x+(Math.random()-.5)*24,y:e.y+(Math.random()-.5)*24,val:~~(e.xp/3)});
   if(Math.random()<.46)g.coinItems.push({x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,val:Math.max(1,~~((1+Math.random()*3)*(1+curMapIdx*.35))),life:700}); // FASE 4: oro mas frecuente y escala por bioma
-  spawnPs(g,e.x,e.y,e.col,12);g.kills++;g.runKills=(g.runKills||0)+1;
+  spawnPs(g,e.x,e.y,e.col,12);spawnPs(g,e.x,e.y,'#ffddaa',4,true);g.kills++;g.runKills=(g.runKills||0)+1;
   if(e.isBoss){if(e.isFinalBoss){g.bfKilled=true;SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;g.portal.visible=true;annPortal('BOSS FINAL DERROTADO!\nPresiona [E] en el PORTAL para avanzar.');}
     document.getElementById('boss-bar-wrap').classList.remove('show');g.curBoss=null;flashScreen('#ffffff');
     for(let k=0;k<20;k++)g.gems.push({x:e.x+(Math.random()-.5)*140,y:e.y+(Math.random()-.5)*140,val:~~(e.xp/20)});
     for(let k=0;k<10;k++)g.coinItems.push({x:e.x+(Math.random()-.5)*90,y:e.y+(Math.random()-.5)*90,val:5+~~(Math.random()*10),life:800});
-    spawnPs(g,e.x,e.y,'#ff44cc',50);spawnPs(g,e.x,e.y,'#ffdd44',34);spawnPs(g,e.x,e.y,'#ffffff',18);}
+    spawnPs(g,e.x,e.y,'#ff44cc',50,true);spawnPs(g,e.x,e.y,'#ffdd44',34,true);spawnPs(g,e.x,e.y,'#ffffff',18,true);}
   g.enemies.splice(idx,1);
 }
 
@@ -1419,7 +1528,9 @@ function update(ts){
   if(p.shieldRegen>0&&p.maxShield>0){p.shieldRegenTimer=(p.shieldRegenTimer||0)+dt;if(p.shieldRegenTimer>=1){p.shield=Math.min(p.maxShield,p.shield+p.shieldRegen);p.shieldRegenTimer=0;}}
   G.misTimer=(G.misTimer||0)+dt;if(G.misTimer>=1){G.misTimer=0;checkMissions();}
   if(p.maxMana>0){p.manaTimer+=dt;if(p.manaTimer>=1){p.mana=Math.min(p.maxMana,p.mana+p.manaRegen);p.manaTimer=0;}}
-  G.cam.x=p.x-GW/2;G.cam.y=p.y-GH/2;
+  G.cam.x+=((p.x-GW/2)-G.cam.x)*Math.min(1,dt*9);G.cam.y+=((p.y-GH/2)-G.cam.y)*Math.min(1,dt*9); // FASE 5: cámara suave (lerp)
+  updateWeather(G,dt);
+  if(SETTINGS.particles&&(p._vx||p._vy)&&Math.random()<.4&&G.parts.length<560)G.parts.push({x:p.x+(Math.random()-.5)*10,y:p.y+p.h*.42,vx:-(p._vx||0)*.18+(Math.random()-.5),vy:-Math.random()*.5,col:'#9a8a6a',size:2,life:12+~~(Math.random()*8),maxLife:20}); // polvo al correr
 
   // E-interact proximity
   let nearChest=null,nearPortal=false;
@@ -1511,7 +1622,7 @@ function updateFps(ts){
     if(el){el.textContent='FPS '+_fpsShown;el.classList.toggle('warn',_fpsShown<50&&_fpsShown>=30);el.classList.toggle('bad',_fpsShown<30);}
   }
 }
-function explodeBomb(g,pr){const rad=62*pr.scale;for(let j=g.enemies.length-1;j>=0;j--){const e=g.enemies[j];if(Math.hypot(e.x-pr.x,e.y-pr.y)<rad){e.hp-=pr.dmg;e.hf=14;spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(e.hp<=0)killE(g,j);}}spawnPs(g,pr.x,pr.y,'#ff8800',30);spawnPs(g,pr.x,pr.y,'#ffdd00',20);g.shake=Math.max(g.shake,10);flashScreen('#ffaa00');}
+function explodeBomb(g,pr){const rad=62*pr.scale;for(let j=g.enemies.length-1;j>=0;j--){const e=g.enemies[j];if(Math.hypot(e.x-pr.x,e.y-pr.y)<rad){e.hp-=pr.dmg;e.hf=14;spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(e.hp<=0)killE(g,j);}}spawnPs(g,pr.x,pr.y,'#ff8800',30,true);spawnPs(g,pr.x,pr.y,'#ffdd00',20,true);spawnPs(g,pr.x,pr.y,'#552200',16);g.shake=Math.max(g.shake,10);flashScreen('#ffaa00');}
 
 // FASE 4: cache de nodos del HUD + escritura solo si cambia (evita writes DOM por frame -> 60 FPS)
 const _hudc={};
