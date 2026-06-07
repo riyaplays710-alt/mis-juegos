@@ -210,8 +210,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Pr
     <div class="stat-line"><span>HP Vida</span><span id="st-hp">-</span></div>
     <div class="stat-line"><span>Escudo</span><span id="st-sh">-</span></div>
     <div class="stat-line"><span>Mana</span><span id="st-mn">-</span></div>
-    <div class="stat-line"><span>Dano base</span><span id="st-dmg">-</span></div>
-    <div class="stat-line"><span>Mult nivel</span><span id="st-lmult">-</span></div>
+    <div class="stat-line"><span>Dano</span><span id="st-dmg">-</span></div>
+    <div class="stat-line"><span>Vel. ataque</span><span id="st-lmult">-</span></div>
     <div class="stat-line"><span>Critico</span><span id="st-crit">-</span></div>
     <div class="stat-line"><span>Velocidad</span><span id="st-spd">-</span></div>
     <div class="stat-line"><span>Nivel</span><span id="st-lv">-</span></div>
@@ -236,18 +236,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Pr
 <div id="screen-intro" class="screen active">
   <canvas id="intro-canvas"></canvas>
   <div class="ic">
-    <div class="logo-sub">SUPERVIVENCIA</div>
     <div class="logo-main">BLOOD<br><span>RITE</span></div>
-    <div class="logo-ver">WORLD EDITION v8</div>
-    <div class="skull-a">💀</div>
-    <div class="map-prev">
-      <div class="mc active">🌲<br>BOSQUE<br>MAP 1</div>
-      <div class="mc locked">🏜<br>DESIERTO<br>MAP 2</div>
-      <div class="mc locked">⚰<br>CEMENTER.<br>MAP 3</div>
-      <div class="mc locked">🔥<br>INFIERNO<br>MAP 4</div>
-    </div>
     <button class="pxbtn start-btn" id="btn-start">COMENZAR</button>
-    <div style="font-size:6px;color:#664466;text-align:center;line-height:2.2">WASD=mover · E=interactuar · TAB=minimapa · ESPACIO=pausa</div>
   </div>
 </div>
 <div id="screen-select" class="screen">
@@ -570,17 +560,17 @@ DRAW_FNS.snake=(p,sx,sy,bob,fl)=>{ctx.save();ctx.translate(sx,sy+bob);if(fl)ctx.
 // CHARS — nerfed base stats, damage scales with level
 // REBALANCE: dano base muy bajo (1-2). Sin escudo inicial (excepto Leon=5). El poder viene de la progresion.
 const CHARS={
-  knight:{name:'Caballero',emoji:'⚔️',hp:120,shield:0,speed:2.0,baseDmg:1,projScale:1.1,cdMult:1.0,regen:0,shieldRegen:0,orbCount:0,xpRadius:80,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:0,weapons:[{name:'Espada',emoji:'⚔️',cd:.75,timer:0,fire:'sword'},{name:'Escudo',emoji:'🛡',cd:3.8,timer:2,fire:'shieldBurst'}]},
-  mage:{name:'Mago',emoji:'🔮',hp:50,shield:0,speed:2.3,baseDmg:2,projScale:.9,cdMult:.85,regen:0,shieldRegen:0,orbCount:0,xpRadius:95,extraKnives:0,maxMana:80,mana:80,manaRegen:7,vampiric:0,critChance:0,weapons:[{name:'Fireball',emoji:'🔥',cd:1.1,timer:0,fire:'fireball'},{name:'Rayo',emoji:'⚡',cd:2.8,timer:1.5,fire:'lightning'}]},
-  hunter:{name:'Cazador',emoji:'🏹',hp:65,shield:0,speed:3.1,baseDmg:1,projScale:.8,cdMult:.88,regen:0,shieldRegen:0,orbCount:0,xpRadius:110,extraKnives:1,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'Flecha',emoji:'🏹',cd:.58,timer:0,fire:'arrow'},{name:'Trampa',emoji:'🪤',cd:4.8,timer:2.2,fire:'trap'}]},
-  necro:{name:'Nigromante',emoji:'💀',hp:42,shield:0,speed:2.2,baseDmg:1,projScale:.95,cdMult:.95,regen:0,shieldRegen:0,orbCount:1,xpRadius:95,extraKnives:0,maxMana:100,mana:100,manaRegen:6,vampiric:.04,critChance:0,weapons:[{name:'Maldicion',emoji:'💀',cd:1.4,timer:0,fire:'curse'},{name:'Drenaje',emoji:'🩸',cd:3.4,timer:1.5,fire:'drain'}]},
-  templar:{name:'Templario',emoji:'🕯️',hp:48,shield:0,speed:2.55,baseDmg:1,projScale:1.0,cdMult:.92,regen:0,shieldRegen:0,orbCount:1,xpRadius:100,extraKnives:0,maxMana:40,mana:40,manaRegen:4,vampiric:.03,critChance:.06,weapons:[{name:'Lanza Solar',emoji:'☀️',cd:1.0,timer:0,fire:'spear'},{name:'Libro Sagrado',emoji:'📖',cd:2.0,timer:0.8,fire:'book'}]},
-  assassin:{name:'Asesina',emoji:'🗡️',hp:36,shield:0,speed:3.35,baseDmg:1,projScale:.78,cdMult:.82,regen:0,shieldRegen:0,orbCount:0,xpRadius:125,extraKnives:2,maxMana:30,mana:30,manaRegen:8,vampiric:0,critChance:.12,weapons:[{name:'Doble Corte',emoji:'🗡️',cd:.5,timer:0,fire:'dashSlash'},{name:'Kunai',emoji:'✨',cd:1.25,timer:0.5,fire:'kunai'}]},
+  knight:{name:'Caballero',emoji:'⚔️',hp:120,shield:0,speed:2.0,baseDmg:6,projScale:1.1,cdMult:1.0,regen:0,shieldRegen:0,orbCount:0,xpRadius:80,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:0,weapons:[{name:'Espada',emoji:'⚔️',cd:.75,timer:0,fire:'sword'},{name:'Escudo',emoji:'🛡',cd:3.8,timer:2,fire:'shieldBurst'}]},
+  mage:{name:'Mago',emoji:'🔮',hp:50,shield:0,speed:2.3,baseDmg:5,projScale:.9,cdMult:.85,regen:0,shieldRegen:0,orbCount:0,xpRadius:95,extraKnives:0,maxMana:80,mana:80,manaRegen:7,vampiric:0,critChance:0,weapons:[{name:'Fireball',emoji:'🔥',cd:1.1,timer:0,fire:'fireball'},{name:'Rayo',emoji:'⚡',cd:2.8,timer:1.5,fire:'lightning'}]},
+  hunter:{name:'Cazador',emoji:'🏹',hp:65,shield:0,speed:3.1,baseDmg:4,projScale:.8,cdMult:.88,regen:0,shieldRegen:0,orbCount:0,xpRadius:110,extraKnives:1,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'Flecha',emoji:'🏹',cd:.58,timer:0,fire:'arrow'},{name:'Trampa',emoji:'🪤',cd:4.8,timer:2.2,fire:'trap'}]},
+  necro:{name:'Nigromante',emoji:'💀',hp:42,shield:0,speed:2.2,baseDmg:5,projScale:.95,cdMult:.95,regen:0,shieldRegen:0,orbCount:1,xpRadius:95,extraKnives:0,maxMana:100,mana:100,manaRegen:6,vampiric:.04,critChance:0,weapons:[{name:'Maldicion',emoji:'💀',cd:1.4,timer:0,fire:'curse'},{name:'Drenaje',emoji:'🩸',cd:3.4,timer:1.5,fire:'drain'}]},
+  templar:{name:'Templario',emoji:'🕯️',hp:48,shield:0,speed:2.55,baseDmg:5,projScale:1.0,cdMult:.92,regen:0,shieldRegen:0,orbCount:1,xpRadius:100,extraKnives:0,maxMana:40,mana:40,manaRegen:4,vampiric:.03,critChance:.06,weapons:[{name:'Lanza Solar',emoji:'☀️',cd:1.0,timer:0,fire:'spear'},{name:'Libro Sagrado',emoji:'📖',cd:2.0,timer:0.8,fire:'book'}]},
+  assassin:{name:'Asesina',emoji:'🗡️',hp:36,shield:0,speed:3.35,baseDmg:4,projScale:.78,cdMult:.82,regen:0,shieldRegen:0,orbCount:0,xpRadius:125,extraKnives:2,maxMana:30,mana:30,manaRegen:8,vampiric:0,critChance:.12,weapons:[{name:'Doble Corte',emoji:'🗡️',cd:.5,timer:0,fire:'dashSlash'},{name:'Kunai',emoji:'✨',cd:1.25,timer:0.5,fire:'kunai'}]},
 };
 
 // Nuevos personajes. Leon: unico con 5 de escudo inicial. Snake: 0 escudo. Ambos 1 de dano base.
-CHARS.leon={name:'Leon',emoji:'\ud83d\udd2b',hp:60,shield:5,speed:2.5,baseDmg:1,projScale:.95,cdMult:.9,regen:0,shieldRegen:0,orbCount:0,xpRadius:100,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.06,weapons:[{name:'Pistola',emoji:'\ud83d\udd2b',cd:.5,timer:0,fire:'handgun'},{name:'Escopeta',emoji:'\ud83d\udca5',cd:1.6,timer:.6,fire:'shotgun'}]};
-CHARS.snake={name:'Snake',emoji:'\ud83d\udeac',hp:55,shield:0,speed:2.6,baseDmg:1,projScale:.9,cdMult:.92,regen:0,shieldRegen:0,orbCount:0,xpRadius:105,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'SOCOM',emoji:'\ud83d\udd2b',cd:.45,timer:0,fire:'handgun'},{name:'Granada',emoji:'\ud83d\udca3',cd:3.0,timer:1,fire:'bomb'}]};
+CHARS.leon={name:'Leon',emoji:'\ud83d\udd2b',hp:60,shield:5,speed:2.5,baseDmg:5,projScale:.95,cdMult:.9,regen:0,shieldRegen:0,orbCount:0,xpRadius:100,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.06,weapons:[{name:'Pistola',emoji:'\ud83d\udd2b',cd:.5,timer:0,fire:'handgun'},{name:'Escopeta',emoji:'\ud83d\udca5',cd:1.6,timer:.6,fire:'shotgun'}]};
+CHARS.snake={name:'Snake',emoji:'\ud83d\udeac',hp:55,shield:0,speed:2.6,baseDmg:4,projScale:.9,cdMult:.92,regen:0,shieldRegen:0,orbCount:0,xpRadius:105,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'SOCOM',emoji:'\ud83d\udd2b',cd:.45,timer:0,fire:'handgun'},{name:'Granada',emoji:'\ud83d\udca3',cd:3.0,timer:1,fire:'bomb'}]};
 
 // Habilidades especiales activas (tecla Q). cd y duracion en frames/seg.
 const SPECIALS={
@@ -595,8 +585,8 @@ function useSpecial(){
   annWave('\u2726 '+sp.name+' activada');flashScreen('#44ffcc');
 }
 
-// Damage = baseDmg × (1 + (level-1) × 0.22) × dmgBonusMult × crit  (sube fuerte por nivel)
-function playerDmgMult(p){return(3+(p.level-1)*0.32)*p.dmgBonusMult;}
+// Dano = baseDmg × dmgBonusMult (acumulacion de %). SIN multiplicadores xN ni escalado por nivel.
+function playerDmgMult(p){return p.dmgBonusMult;}
 
 const WP=[{name:'Daga Triple',emoji:'🗡',cd:.36,fire:'dagger',desc:'3 dagas rapidas'},{name:'Latigo',emoji:'🔗',cd:.95,fire:'whip',desc:'Arco que penetra'},{name:'Bomba',emoji:'💣',cd:3.4,fire:'bomb',desc:'Explosion en area'},{name:'Lanza',emoji:'🪃',cd:1.1,fire:'spear',desc:'Penetra 5 enemigos'},{name:'Libro Arcano',emoji:'📖',cd:1.9,fire:'book',desc:'4 orbes orbitales'}];
 const AP=[
@@ -638,10 +628,10 @@ const UPGRADES=[
   {id:'res',icon:'🛡',name:'Piel de Hierro',rarity:'rare',desc:'+10% resistencia',apply:g=>{g.player.resist=Math.min(.7,(g.player.resist||0)+.10);}},
   // Epicos
   {id:'vmp',icon:'🧛',name:'Sed Vampirica',rarity:'epic',desc:'+8% robo de vida',apply:g=>{g.player.vampiric+=.08;}},
-  {id:'crit2',icon:'🎯',name:'Golpe Mortal',rarity:'epic',desc:'+30% dano critico',apply:g=>{g.player.critMult=(g.player.critMult||2)+.3;}},
+  {id:'crit2',icon:'🎯',name:'Punteria Letal',rarity:'epic',desc:'+8% critico',apply:g=>{g.player.critChance+=.08;}},
   {id:'aura',icon:'🔆',name:'Aura Sagrada',rarity:'epic',desc:'Aura que quema enemigos cercanos',apply:g=>{g.player.auraDmg+=3;}},
   {id:'burn',icon:'🔥',name:'Toque Igneo',rarity:'epic',desc:'Tus proyectiles incendian',apply:g=>{g.player.burn+=1;}},
-  {id:'fur',icon:'🔱',name:'Frenesi',rarity:'epic',desc:'Dano x2 temporal',apply:g=>{g.player.furyTimer=300;}},
+  {id:'fur',icon:'🔱',name:'Frenesi',rarity:'epic',desc:'+20% dano',apply:g=>{g.player.dmgBonusMult+=.20;}},
   {id:'sbr',icon:'💨',name:'Viento Veloz',rarity:'epic',desc:'+0.8 velocidad',apply:g=>{g.player.speed+=.8;}},
   // Legendarios (reliquias)
   {id:'r_glass',icon:'💎',name:'Reliquia: Canon de Cristal',rarity:'legendary',desc:'+60% dano pero -20 vida max',apply:g=>{g.player.dmgBonusMult+=.6;g.player.maxHp=Math.max(20,g.player.maxHp-20);g.player.hp=Math.min(g.player.hp,g.player.maxHp);}},
@@ -714,8 +704,8 @@ const TOTEM_UPGRADES=[
   // Critico
   {ic:'\u26a1',name:'+5% Critico',fn:p=>p.critChance+=.05},
   {ic:'\u26a1',name:'+10% Critico',fn:p=>p.critChance+=.10},
-  {ic:'\ud83d\udd25',name:'+20% Dano Critico',fn:p=>p.critMult=(p.critMult||2)+.2},
-  {ic:'\ud83d\udd25',name:'+40% Dano Critico',fn:p=>p.critMult=(p.critMult||2)+.4},
+  {ic:'\u2764\ufe0f',name:'+25 Vida',fn:p=>{p.maxHp+=25;p.hp+=25;}},
+  {ic:'\u26a1',name:'+8% Critico',fn:p=>p.critChance+=.08},
   // Vel. Ataque
   {ic:'\u23f1',name:'+5% Vel. Ataque',fn:p=>p.cdMult=Math.max(.3,p.cdMult*0.95)},
   {ic:'\u23f1',name:'+10% Vel. Ataque',fn:p=>p.cdMult=Math.max(.3,p.cdMult*0.90)},
@@ -808,8 +798,8 @@ function openMinimap(){
   document.getElementById('st-hp').textContent=~~p.hp+'/'+p.maxHp;
   document.getElementById('st-sh').textContent=~~p.shield+'/'+p.maxShield;
   document.getElementById('st-mn').textContent=p.maxMana>0?(~~p.mana+'/'+p.maxMana):'N/A';
-  document.getElementById('st-dmg').textContent=p.baseDmg;
-  document.getElementById('st-lmult').textContent='x'+dm.toFixed(2);
+  document.getElementById('st-dmg').textContent=(p.baseDmg*p.dmgBonusMult).toFixed(1);
+  document.getElementById('st-lmult').textContent='+'+Math.round((1/p.cdMult-1)*100)+'%';
   document.getElementById('st-crit').textContent=~~(p.critChance*100)+'%';
   document.getElementById('st-spd').textContent=p.speed.toFixed(2);
   document.getElementById('st-lv').textContent=p.level;
@@ -852,7 +842,7 @@ function spawnMiniBoss(g){
 }
 function nearest(g){const p=g.player;let b=null,bd=Infinity;for(const e of g.enemies){const d=(e.x-p.x)**2+(e.y-p.y)**2;if(d<bd){bd=d;b=e;}}return b;}
 function aim(g){const t=nearest(g);return t?Math.atan2(t.y-g.player.y,t.x-g.player.x):(g.player.facing>0?0:Math.PI);}
-function calcD(g,base,crit){const p=g.player;let d=base*playerDmgMult(p);if(p.furyTimer>0)d*=2;return~~(d*(crit?(p.critMult||2):1));}
+function calcD(g,base,crit){const p=g.player;let d=base*playerDmgMult(p);return Math.max(1,~~(d*(crit?1.5:1)));}
 function isCrit(p){return Math.random()<p.critChance;}
 function addP(g,x,y,vx,vy,dmg,life,sc,type,col,crit,extra){const pl=g.player;g.projs.push({x,y,vx,vy,dmg,life:life*(pl.rangeMult||1),scale:sc*(pl.projSizeMult||1),type,col,crit:!!crit,...(extra||{})});}
 function fireSword(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.28,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*8,Math.sin(a)*8,calcD(g,p.baseDmg*2.2,c),75,p.projScale,'sword',c?'#ffff44':'#aaddff',c);}}
@@ -1064,7 +1054,7 @@ function renderWS(){const c=document.getElementById('weapon-slots');c.innerHTML=
 
 function levelUp(){
   const p=G.player;p.level++;p.xp-=p.xpNext;p.xpNext=~~(p.xpNext*1.40);// harder XP curve
-  p.hp=Math.min(p.maxHp,p.hp+8);p.shield=Math.min(p.maxShield,p.shield+6);p.speed+=.04;p.furyTimer=180;G.paused=true;
+  p.hp=Math.min(p.maxHp,p.hp+8);p.shield=Math.min(p.maxShield,p.shield+6);G.paused=true;
   const lw=p.level<4?[4,2,.4]:[3,2,1.1];const wm={common:lw[0],rare:lw[1],epic:lw[2],legendary:p.level<5?0:0.6};const weighted=[];for(const u of UPGRADES){const w=wm[u.rarity]||1;for(let i=0;i<~~(w*8);i++)weighted.push(u);}
   const picks=[],seen=new Set();while(picks.length<3&&weighted.length){const u=weighted[~~(Math.random()*weighted.length)];if(!seen.has(u.id)){seen.add(u.id);picks.push(u);}}
   const ov=document.getElementById('lu-ov'),cards=document.getElementById('lu-cards');cards.innerHTML='';picks.forEach(u=>{const card=document.createElement('div');card.className='ucard r-'+u.rarity;card.innerHTML='<div class="ucard-icon">'+u.icon+'</div><div class="ucard-name">'+u.name+'</div><div class="ucard-rar" style="color:'+RC[u.rarity]+'">'+RL[u.rarity]+'</div><div class="ucard-desc">'+u.desc+'</div>';card.onclick=()=>{u.apply(G);ov.classList.remove('show');G.paused=false;};cards.appendChild(card);});ov.classList.add('show');
@@ -1073,7 +1063,7 @@ function levelUp(){
 function gameOver(){
   if(!G||!G.running)return;G.running=false;document.getElementById('danger-flash').classList.remove('show');
   const t=~~G.time,dm=playerDmgMult(G.player);
-  document.getElementById('go-stats').textContent='HEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nMAPA: '+G.mapDef.emoji+' '+G.mapDef.name+'\nNIVEL: '+G.player.level+'\nDANO MULT: x'+dm.toFixed(2)+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\nTIEMPO: '+String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')+'\nOLA: '+G.waveNum+(G.overTime?'\nOVERTIME: x'+G.overTimeMult.toFixed(1):'');
+  document.getElementById('go-stats').textContent='HEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nMAPA: '+G.mapDef.emoji+' '+G.mapDef.name+'\nNIVEL: '+G.player.level+'\nDANO: '+(G.player.baseDmg*G.player.dmgBonusMult).toFixed(1)+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\nTIEMPO: '+String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')+'\nOLA: '+G.waveNum+(G.overTime?'\nOVERTIME: x'+G.overTimeMult.toFixed(1):'');
   document.getElementById('go-ov').classList.add('show');document.getElementById('boss-bar-wrap').classList.remove('show');
 }
 
