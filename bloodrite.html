@@ -210,8 +210,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Pr
     <div class="stat-line"><span>HP Vida</span><span id="st-hp">-</span></div>
     <div class="stat-line"><span>Escudo</span><span id="st-sh">-</span></div>
     <div class="stat-line"><span>Mana</span><span id="st-mn">-</span></div>
-    <div class="stat-line"><span>Dano base</span><span id="st-dmg">-</span></div>
-    <div class="stat-line"><span>Mult nivel</span><span id="st-lmult">-</span></div>
+    <div class="stat-line"><span>Dano</span><span id="st-dmg">-</span></div>
+    <div class="stat-line"><span>Vel. ataque</span><span id="st-lmult">-</span></div>
     <div class="stat-line"><span>Critico</span><span id="st-crit">-</span></div>
     <div class="stat-line"><span>Velocidad</span><span id="st-spd">-</span></div>
     <div class="stat-line"><span>Nivel</span><span id="st-lv">-</span></div>
@@ -252,7 +252,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Pr
 </div>
 <div id="screen-select" class="screen">
   <div class="sel-title">ELIGE TU HEROE</div>
-  <div style="font-size:7px;color:#886688;margin-bottom:5px;">Dano escala con nivel — sobrevive para hacerte fuerte</div>
+  <div style="font-size:7px;color:#886688;margin-bottom:5px;">Dano base fijo — crece SOLO con porcentajes (totems, objetos, mejoras)</div>
   <div class="char-cards">
     <div class="char-card knight" data-char="knight">
       <div class="char-preview"><canvas id="prev-knight" width="48" height="64"></canvas></div>
@@ -567,20 +567,21 @@ DRAW_FNS.snake=(p,sx,sy,bob,fl)=>{ctx.save();ctx.translate(sx,sy+bob);if(fl)ctx.
   px(-8,7,7,15,'#2e3a34');px(1,7,7,15,'#2e3a34');px(-9,22,8,5,'#1a221e');px(1,22,8,5,'#1a221e'); // piernas
   ctx.restore();};
 
-// CHARS — nerfed base stats, damage scales with level
-// REBALANCE: dano base muy bajo (1-2). Sin escudo inicial (excepto Leon=5). El poder viene de la progresion.
+// CHARS — dano base FIJO por personaje; sin escalado por nivel (solo porcentajes)
+// DANO FIJO POR PERSONAJE: rapidos=4, equilibrados=5, pesados=6. Leon=5 (+5 escudo). Snake=4.
+// La progresion viene SOLO de porcentajes acumulativos sobre p.dmg (p.dmg*=1.10 = +10%).
 const CHARS={
-  knight:{name:'Caballero',emoji:'⚔️',hp:120,shield:0,speed:2.0,baseDmg:1,projScale:1.1,cdMult:1.0,regen:0,shieldRegen:0,orbCount:0,xpRadius:80,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:0,weapons:[{name:'Espada',emoji:'⚔️',cd:.75,timer:0,fire:'sword'},{name:'Escudo',emoji:'🛡',cd:3.8,timer:2,fire:'shieldBurst'}]},
-  mage:{name:'Mago',emoji:'🔮',hp:50,shield:0,speed:2.3,baseDmg:2,projScale:.9,cdMult:.85,regen:0,shieldRegen:0,orbCount:0,xpRadius:95,extraKnives:0,maxMana:80,mana:80,manaRegen:7,vampiric:0,critChance:0,weapons:[{name:'Fireball',emoji:'🔥',cd:1.1,timer:0,fire:'fireball'},{name:'Rayo',emoji:'⚡',cd:2.8,timer:1.5,fire:'lightning'}]},
-  hunter:{name:'Cazador',emoji:'🏹',hp:65,shield:0,speed:3.1,baseDmg:1,projScale:.8,cdMult:.88,regen:0,shieldRegen:0,orbCount:0,xpRadius:110,extraKnives:1,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'Flecha',emoji:'🏹',cd:.58,timer:0,fire:'arrow'},{name:'Trampa',emoji:'🪤',cd:4.8,timer:2.2,fire:'trap'}]},
-  necro:{name:'Nigromante',emoji:'💀',hp:42,shield:0,speed:2.2,baseDmg:1,projScale:.95,cdMult:.95,regen:0,shieldRegen:0,orbCount:1,xpRadius:95,extraKnives:0,maxMana:100,mana:100,manaRegen:6,vampiric:.04,critChance:0,weapons:[{name:'Maldicion',emoji:'💀',cd:1.4,timer:0,fire:'curse'},{name:'Drenaje',emoji:'🩸',cd:3.4,timer:1.5,fire:'drain'}]},
-  templar:{name:'Templario',emoji:'🕯️',hp:48,shield:0,speed:2.55,baseDmg:1,projScale:1.0,cdMult:.92,regen:0,shieldRegen:0,orbCount:1,xpRadius:100,extraKnives:0,maxMana:40,mana:40,manaRegen:4,vampiric:.03,critChance:.06,weapons:[{name:'Lanza Solar',emoji:'☀️',cd:1.0,timer:0,fire:'spear'},{name:'Libro Sagrado',emoji:'📖',cd:2.0,timer:0.8,fire:'book'}]},
-  assassin:{name:'Asesina',emoji:'🗡️',hp:36,shield:0,speed:3.35,baseDmg:1,projScale:.78,cdMult:.82,regen:0,shieldRegen:0,orbCount:0,xpRadius:125,extraKnives:2,maxMana:30,mana:30,manaRegen:8,vampiric:0,critChance:.12,weapons:[{name:'Doble Corte',emoji:'🗡️',cd:.5,timer:0,fire:'dashSlash'},{name:'Kunai',emoji:'✨',cd:1.25,timer:0.5,fire:'kunai'}]},
+  knight:{name:'Caballero',emoji:'⚔️',hp:120,shield:0,speed:2.0,dmg:6,projScale:1.1,cdMult:1.0,regen:0,shieldRegen:0,orbCount:0,xpRadius:80,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:0,weapons:[{name:'Espada',emoji:'⚔️',cd:.75,timer:0,fire:'sword'},{name:'Escudo',emoji:'🛡',cd:3.8,timer:2,fire:'shieldBurst'}]},
+  mage:{name:'Mago',emoji:'🔮',hp:50,shield:0,speed:2.3,dmg:5,projScale:.9,cdMult:.85,regen:0,shieldRegen:0,orbCount:0,xpRadius:95,extraKnives:0,maxMana:80,mana:80,manaRegen:7,vampiric:0,critChance:0,weapons:[{name:'Fireball',emoji:'🔥',cd:1.1,timer:0,fire:'fireball'},{name:'Rayo',emoji:'⚡',cd:2.8,timer:1.5,fire:'lightning'}]},
+  hunter:{name:'Cazador',emoji:'🏹',hp:65,shield:0,speed:3.1,dmg:4,projScale:.8,cdMult:.88,regen:0,shieldRegen:0,orbCount:0,xpRadius:110,extraKnives:1,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'Flecha',emoji:'🏹',cd:.58,timer:0,fire:'arrow'},{name:'Trampa',emoji:'🪤',cd:4.8,timer:2.2,fire:'trap'}]},
+  necro:{name:'Nigromante',emoji:'💀',hp:42,shield:0,speed:2.2,dmg:5,projScale:.95,cdMult:.95,regen:0,shieldRegen:0,orbCount:1,xpRadius:95,extraKnives:0,maxMana:100,mana:100,manaRegen:6,vampiric:.04,critChance:0,weapons:[{name:'Maldicion',emoji:'💀',cd:1.4,timer:0,fire:'curse'},{name:'Drenaje',emoji:'🩸',cd:3.4,timer:1.5,fire:'drain'}]},
+  templar:{name:'Templario',emoji:'🕯️',hp:48,shield:0,speed:2.55,dmg:5,projScale:1.0,cdMult:.92,regen:0,shieldRegen:0,orbCount:1,xpRadius:100,extraKnives:0,maxMana:40,mana:40,manaRegen:4,vampiric:.03,critChance:.06,weapons:[{name:'Lanza Solar',emoji:'☀️',cd:1.0,timer:0,fire:'spear'},{name:'Libro Sagrado',emoji:'📖',cd:2.0,timer:0.8,fire:'book'}]},
+  assassin:{name:'Asesina',emoji:'🗡️',hp:36,shield:0,speed:3.35,dmg:4,projScale:.78,cdMult:.82,regen:0,shieldRegen:0,orbCount:0,xpRadius:125,extraKnives:2,maxMana:30,mana:30,manaRegen:8,vampiric:0,critChance:.12,weapons:[{name:'Doble Corte',emoji:'🗡️',cd:.5,timer:0,fire:'dashSlash'},{name:'Kunai',emoji:'✨',cd:1.25,timer:0.5,fire:'kunai'}]},
 };
 
-// Nuevos personajes. Leon: unico con 5 de escudo inicial. Snake: 0 escudo. Ambos 1 de dano base.
-CHARS.leon={name:'Leon',emoji:'\ud83d\udd2b',hp:60,shield:5,speed:2.5,baseDmg:1,projScale:.95,cdMult:.9,regen:0,shieldRegen:0,orbCount:0,xpRadius:100,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.06,weapons:[{name:'Pistola',emoji:'\ud83d\udd2b',cd:.5,timer:0,fire:'handgun'},{name:'Escopeta',emoji:'\ud83d\udca5',cd:1.6,timer:.6,fire:'shotgun'}]};
-CHARS.snake={name:'Snake',emoji:'\ud83d\udeac',hp:55,shield:0,speed:2.6,baseDmg:1,projScale:.9,cdMult:.92,regen:0,shieldRegen:0,orbCount:0,xpRadius:105,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'SOCOM',emoji:'\ud83d\udd2b',cd:.45,timer:0,fire:'handgun'},{name:'Granada',emoji:'\ud83d\udca3',cd:3.0,timer:1,fire:'bomb'}]};
+// Nuevos personajes. Leon: unico con 5 de escudo inicial y 5 de dano. Snake: 0 escudo y 4 de dano.
+CHARS.leon={name:'Leon',emoji:'\ud83d\udd2b',hp:60,shield:5,speed:2.5,dmg:5,projScale:.95,cdMult:.9,regen:0,shieldRegen:0,orbCount:0,xpRadius:100,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.06,weapons:[{name:'Pistola',emoji:'\ud83d\udd2b',cd:.5,timer:0,fire:'handgun'},{name:'Escopeta',emoji:'\ud83d\udca5',cd:1.6,timer:.6,fire:'shotgun'}]};
+CHARS.snake={name:'Snake',emoji:'\ud83d\udeac',hp:55,shield:0,speed:2.6,dmg:4,projScale:.9,cdMult:.92,regen:0,shieldRegen:0,orbCount:0,xpRadius:105,extraKnives:0,maxMana:0,mana:0,manaRegen:0,vampiric:0,critChance:.05,weapons:[{name:'SOCOM',emoji:'\ud83d\udd2b',cd:.45,timer:0,fire:'handgun'},{name:'Granada',emoji:'\ud83d\udca3',cd:3.0,timer:1,fire:'bomb'}]};
 
 // Habilidades especiales activas (tecla Q). cd y duracion en frames/seg.
 const SPECIALS={
@@ -595,26 +596,29 @@ function useSpecial(){
   annWave('\u2726 '+sp.name+' activada');flashScreen('#44ffcc');
 }
 
-// Damage = baseDmg × (1 + (level-1) × 0.22) × dmgBonusMult × crit  (sube fuerte por nivel)
-function playerDmgMult(p){return(3+(p.level-1)*0.32)*p.dmgBonusMult;}
+// DANO: cada personaje tiene un dano base FIJO (p.dmg, 4-6). Toda la progresion es por
+// PORCENTAJES acumulativos sobre p.dmg (p.dmg*=1.10 = +10%, se compone naturalmente).
+// No existe multiplicador global ni escalado automatico por nivel. Las armas tienen su
+// propio coeficiente de potencia (identidad del arma), no un multiplicador de progresion.
 
 const WP=[{name:'Daga Triple',emoji:'🗡',cd:.36,fire:'dagger',desc:'3 dagas rapidas'},{name:'Latigo',emoji:'🔗',cd:.95,fire:'whip',desc:'Arco que penetra'},{name:'Bomba',emoji:'💣',cd:3.4,fire:'bomb',desc:'Explosion en area'},{name:'Lanza',emoji:'🪃',cd:1.1,fire:'spear',desc:'Penetra 5 enemigos'},{name:'Libro Arcano',emoji:'📖',cd:1.9,fire:'book',desc:'4 orbes orbitales'}];
 const AP=[
-  {name:'Botas de Velocidad',emoji:'👢',rarity:'common',stats:'+10% velocidad',apply:g=>{g.player.speed*=1.10;}},
-  {name:'Guantes de Dano',emoji:'🧤',rarity:'common',stats:'+12% dano',apply:g=>{g.player.dmgBonusMult+=.12;}},
+  {name:'Botas Ligeras',emoji:'👢',rarity:'common',stats:'+10% velocidad',apply:g=>{g.player.speed*=1.10;}},
+  {name:'Guantes de Combate',emoji:'🧤',rarity:'common',stats:'+15% dano',apply:g=>{g.player.dmg*=1.15;}},
   {name:'Collar de Vida',emoji:'📿',rarity:'rare',stats:'+30 vida max',apply:g=>{g.player.maxHp+=30;g.player.hp+=30;}},
-  {name:'Anillo Critico',emoji:'💍',rarity:'rare',stats:'+12% critico',apply:g=>{g.player.critChance+=.12;}},
+  {name:'Anillo Critico',emoji:'💍',rarity:'rare',stats:'+8% critico',apply:g=>{g.player.critChance+=.08;}},
+  {name:'Collar Ancestral',emoji:'🧿',rarity:'rare',stats:'+20% experiencia',apply:g=>{g.player.xpMult=(g.player.xpMult||1)+.20;}},
   {name:'Reloj Arcano',emoji:'⏲',rarity:'rare',stats:'+12% vel. ataque',apply:g=>{g.player.cdMult=Math.max(.3,g.player.cdMult*0.88);}},
   {name:'Capa Sombria',emoji:'🧥',rarity:'rare',stats:'+10% resistencia',apply:g=>{g.player.resist=Math.min(.7,(g.player.resist||0)+.10);}},
   {name:'Botas Elite',emoji:'🥾',rarity:'rare',stats:'+0.5 vel  +15 vida',apply:g=>{g.player.speed+=.5;g.player.maxHp+=15;g.player.hp+=15;}},
-  {name:'Nucleo Energetico',emoji:'🔋',rarity:'epic',stats:'+15% vel.ataque  +12% dano',apply:g=>{g.player.cdMult=Math.max(.3,g.player.cdMult*0.85);g.player.dmgBonusMult+=.12;}},
+  {name:'Nucleo Energetico',emoji:'🔋',rarity:'epic',stats:'+15% vel.ataque  +12% dano',apply:g=>{g.player.cdMult=Math.max(.3,g.player.cdMult*0.85);g.player.dmg*=1.12;}},
   {name:'Ojo del Lince',emoji:'👁',rarity:'epic',stats:'+18% critico  +10% alcance',apply:g=>{g.player.critChance+=.18;g.player.rangeMult=(g.player.rangeMult||1)+.10;}},
-  {name:'Totem Ancestral',emoji:'🗿',rarity:'epic',stats:'+1 orbe  +12% dano',apply:g=>{g.player.orbCount+=1;g.player.dmgBonusMult+=.12;}},
-  {name:'Corazon Gigante',emoji:'💗',rarity:'epic',stats:'+60 vida max y cura total',apply:g=>{g.player.maxHp+=60;g.player.hp=g.player.maxHp;}},
-  {name:'Corona de Espinas',emoji:'👑',rarity:'epic',stats:'+40% dano  -8% vel',apply:g=>{g.player.dmgBonusMult+=.4;g.player.speed*=.92;}},
-  {name:'Brasa Eterna',emoji:'🔥',rarity:'legendary',stats:'Proyectiles igneos +15% dano',apply:g=>{g.player.burn+=1;g.player.dmgBonusMult+=.15;}},
+  {name:'Totem Ancestral',emoji:'🗿',rarity:'epic',stats:'+1 orbe  +12% dano',apply:g=>{g.player.orbCount+=1;g.player.dmg*=1.12;}},
+  {name:'Corazon Gigante',emoji:'💗',rarity:'epic',stats:'+40 vida max y cura total',apply:g=>{g.player.maxHp+=40;g.player.hp=g.player.maxHp;}},
+  {name:'Corona de Espinas',emoji:'👑',rarity:'epic',stats:'+40% dano  -8% vel',apply:g=>{g.player.dmg*=1.40;g.player.speed*=.92;}},
+  {name:'Brasa Eterna',emoji:'🔥',rarity:'legendary',stats:'Proyectiles igneos +15% dano',apply:g=>{g.player.burn+=1;g.player.dmg*=1.15;}},
   {name:'Orbe Gemelo',emoji:'🌌',rarity:'legendary',stats:'+2 orbes orbitales',apply:g=>{g.player.orbCount+=2;}},
-  {name:'Fragmento Legendario',emoji:'💠',rarity:'legendary',stats:'+30% dano +10% crit +1 proy.',apply:g=>{g.player.dmgBonusMult+=.3;g.player.critChance+=.10;g.player.extraKnives+=1;}},
+  {name:'Fragmento Legendario',emoji:'💠',rarity:'legendary',stats:'+30% dano +10% crit +1 proy.',apply:g=>{g.player.dmg*=1.30;g.player.critChance+=.10;g.player.extraKnives+=1;}},
   {name:'Sangre de Dragon',emoji:'🐉',rarity:'legendary',stats:'+10% robo vida +40 vida',apply:g=>{g.player.vampiric+=.10;g.player.maxHp+=40;g.player.hp+=40;}},
 ];
 // Recompensas de NIVEL estilo roguelite: pasivas, reliquias, auras, invocaciones y modificadores.
@@ -624,10 +628,10 @@ const UPGRADES=[
   {id:'spd',icon:'👟',name:'Agilidad',rarity:'common',desc:'+0.3 velocidad',apply:g=>{g.player.speed+=.3;}},
   {id:'reg',icon:'🩸',name:'Regeneracion',rarity:'common',desc:'+1.5 vida/seg',apply:g=>{g.player.regen+=1.5;}},
   {id:'mag',icon:'🧲',name:'Iman Arcano',rarity:'common',desc:'Radio de XP x1.6',apply:g=>{g.player.xpRadius*=1.6;}},
-  {id:'dmg5',icon:'🔪',name:'Filo Afilado',rarity:'common',desc:'+10% dano',apply:g=>{g.player.dmgBonusMult+=.10;}},
+  {id:'dmg5',icon:'🔪',name:'Filo Afilado',rarity:'common',desc:'+10% dano',apply:g=>{g.player.dmg*=1.10;}},
   {id:'xp1',icon:'✨',name:'Sabiduria',rarity:'common',desc:'+15% experiencia',apply:g=>{g.player.xpMult=(g.player.xpMult||1)+.15;}},
   // Raros
-  {id:'dmg',icon:'⚔️',name:'Furia de Batalla',rarity:'rare',desc:'+20% dano',apply:g=>{g.player.dmgBonusMult+=.2;}},
+  {id:'dmg',icon:'⚔️',name:'Furia de Batalla',rarity:'rare',desc:'+20% dano',apply:g=>{g.player.dmg*=1.20;}},
   {id:'cd',icon:'⏱',name:'Cadencia Rapida',rarity:'rare',desc:'+15% velocidad de ataque',apply:g=>{g.player.cdMult=Math.max(.3,g.player.cdMult*0.85);}},
   {id:'kni',icon:'🗡',name:'Andanada',rarity:'rare',desc:'+1 proyectil',apply:g=>{g.player.extraKnives+=1;}},
   {id:'aoe',icon:'💥',name:'Proyectiles Pesados',rarity:'rare',desc:'+25% tamano de proyectil',apply:g=>{g.player.projSizeMult=(g.player.projSizeMult||1)+.25;}},
@@ -638,16 +642,16 @@ const UPGRADES=[
   {id:'res',icon:'🛡',name:'Piel de Hierro',rarity:'rare',desc:'+10% resistencia',apply:g=>{g.player.resist=Math.min(.7,(g.player.resist||0)+.10);}},
   // Epicos
   {id:'vmp',icon:'🧛',name:'Sed Vampirica',rarity:'epic',desc:'+8% robo de vida',apply:g=>{g.player.vampiric+=.08;}},
-  {id:'crit2',icon:'🎯',name:'Golpe Mortal',rarity:'epic',desc:'+30% dano critico',apply:g=>{g.player.critMult=(g.player.critMult||2)+.3;}},
+  {id:'crit2',icon:'🎯',name:'Golpe Mortal',rarity:'epic',desc:'+20% dano  +8% critico',apply:g=>{g.player.dmg*=1.20;g.player.critChance+=.08;}},
   {id:'aura',icon:'🔆',name:'Aura Sagrada',rarity:'epic',desc:'Aura que quema enemigos cercanos',apply:g=>{g.player.auraDmg+=3;}},
   {id:'burn',icon:'🔥',name:'Toque Igneo',rarity:'epic',desc:'Tus proyectiles incendian',apply:g=>{g.player.burn+=1;}},
-  {id:'fur',icon:'🔱',name:'Frenesi',rarity:'epic',desc:'Dano x2 temporal',apply:g=>{g.player.furyTimer=300;}},
+  {id:'fur',icon:'🔱',name:'Frenesi',rarity:'epic',desc:'+30% dano',apply:g=>{g.player.dmg*=1.30;}},
   {id:'sbr',icon:'💨',name:'Viento Veloz',rarity:'epic',desc:'+0.8 velocidad',apply:g=>{g.player.speed+=.8;}},
   // Legendarios (reliquias)
-  {id:'r_glass',icon:'💎',name:'Reliquia: Canon de Cristal',rarity:'legendary',desc:'+60% dano pero -20 vida max',apply:g=>{g.player.dmgBonusMult+=.6;g.player.maxHp=Math.max(20,g.player.maxHp-20);g.player.hp=Math.min(g.player.hp,g.player.maxHp);}},
+  {id:'r_glass',icon:'💎',name:'Reliquia: Canon de Cristal',rarity:'legendary',desc:'+60% dano pero -20 vida max',apply:g=>{g.player.dmg*=1.60;g.player.maxHp=Math.max(20,g.player.maxHp-20);g.player.hp=Math.min(g.player.hp,g.player.maxHp);}},
   {id:'r_twin',icon:'🌌',name:'Reliquia: Orbes Gemelos',rarity:'legendary',desc:'+2 orbes orbitales',apply:g=>{g.player.orbCount+=2;}},
-  {id:'r_inferno',icon:'☄️',name:'Reliquia: Infierno',rarity:'legendary',desc:'Incendio potente +20% dano',apply:g=>{g.player.burn+=2;g.player.dmgBonusMult+=.2;}},
-  {id:'r_blood',icon:'🩸',name:'Reliquia: Sed de Sangre',rarity:'legendary',desc:'+15% robo de vida +10% dano',apply:g=>{g.player.vampiric+=.15;g.player.dmgBonusMult+=.1;}},
+  {id:'r_inferno',icon:'☄️',name:'Reliquia: Infierno',rarity:'legendary',desc:'Incendio potente +20% dano',apply:g=>{g.player.burn+=2;g.player.dmg*=1.20;}},
+  {id:'r_blood',icon:'🩸',name:'Reliquia: Sed de Sangre',rarity:'legendary',desc:'+15% robo de vida +10% dano',apply:g=>{g.player.vampiric+=.15;g.player.dmg*=1.10;}},
 ];
 const RC={common:'#aaa',rare:'#8844ff',epic:'#ff6622',legendary:'#ffcc00'};
 const RL={common:'COMUN',rare:'RARO',epic:'EPICO',legendary:'LEGENDARIO'};
@@ -691,7 +695,7 @@ function cloneW(k){return CHARS[k].weapons.map(w=>({...w}));}
 
 function makePlayer(ck){
   const b=CHARS[ck];
-  return{x:WS/2+(Math.random()-.5)*200,y:WHS/2+(Math.random()-.5)*200,w:16,h:22,hp:b.hp,maxHp:b.hp,shield:b.shield,maxShield:b.shield,speed:b.speed,level:1,xp:0,xpNext:80,baseDmg:b.baseDmg,dmgBonusMult:1.0,projScale:b.projScale,cdMult:b.cdMult,regen:b.regen,shieldRegen:b.shieldRegen,regenTimer:0,shieldRegenTimer:0,invincibleTimer:0,orbCount:b.orbCount,xpRadius:b.xpRadius,extraKnives:b.extraKnives,facing:1,animFrame:0,animTimer:0,charKey:ck,vampiric:b.vampiric,critChance:b.critChance,furyTimer:0,maxMana:b.maxMana,mana:b.mana,manaRegen:b.manaRegen,manaTimer:0,specialCdTimer:0,rollTimer:0,stealthTimer:0,hitFlash:0,_vx:0,_vy:0,xpMult:1,resist:0,projSpeedMult:1,critMult:2,rangeMult:1,projSizeMult:1,effectDur:1,auraDmg:0,auraR:66,burn:0};
+  return{x:WS/2+(Math.random()-.5)*200,y:WHS/2+(Math.random()-.5)*200,w:16,h:22,hp:b.hp,maxHp:b.hp,shield:b.shield,maxShield:b.shield,speed:b.speed,level:1,xp:0,xpNext:80,dmg:b.dmg,baseCdMult:b.cdMult,projScale:b.projScale,cdMult:b.cdMult,regen:b.regen,shieldRegen:b.shieldRegen,regenTimer:0,shieldRegenTimer:0,invincibleTimer:0,orbCount:b.orbCount,xpRadius:b.xpRadius,extraKnives:b.extraKnives,facing:1,animFrame:0,animTimer:0,charKey:ck,vampiric:b.vampiric,critChance:b.critChance,furyTimer:0,maxMana:b.maxMana,mana:b.mana,manaRegen:b.manaRegen,manaTimer:0,specialCdTimer:0,rollTimer:0,stealthTimer:0,hitFlash:0,_vx:0,_vy:0,xpMult:1,resist:0,projSpeedMult:1,critMult:2,rangeMult:1,projSizeMult:1,effectDur:1,auraDmg:0,auraR:66,burn:0};
 }
 
 function generateChests(){const c=[];for(let i=0;i<8;i++)c.push({x:200+Math.random()*(WS-400),y:200+Math.random()*(WHS-400),open:false,item:null,type:'?',w:20,h:16});return c;}
@@ -701,11 +705,11 @@ function portalPos(mi){const o=[{x:WHH*.5,y:WHH*.5},{x:WHH*1.5,y:WHH*.5},{x:WHH*
 // 10 idolos repartidos por el mapa. Al acercarse muestran un circulo y permiten elegir 1 de 3 mejoras.
 function generateTotems(){const a=[];for(let i=0;i<10;i++)a.push({x:300+Math.random()*(WS-600),y:300+Math.random()*(WHS-600),used:false,r:16,bob:Math.random()*6.28});return a;}
 const TOTEM_UPGRADES=[
-  // Dano
-  {ic:'\u2694\ufe0f',name:'+5% Dano',fn:p=>p.dmgBonusMult+=.05},
-  {ic:'\u2694\ufe0f',name:'+10% Dano',fn:p=>p.dmgBonusMult+=.10},
-  {ic:'\u2694\ufe0f',name:'+15% Dano',fn:p=>p.dmgBonusMult+=.15},
-  {ic:'\ud83d\udca5',name:'+25% Dano',fn:p=>p.dmgBonusMult+=.25},
+  // Dano (porcentaje acumulativo sobre el dano actual)
+  {ic:'\u2694\ufe0f',name:'+5% Dano',fn:p=>p.dmg*=1.05},
+  {ic:'\u2694\ufe0f',name:'+10% Dano',fn:p=>p.dmg*=1.10},
+  {ic:'\u2694\ufe0f',name:'+15% Dano',fn:p=>p.dmg*=1.15},
+  {ic:'\ud83d\udca5',name:'+20% Dano',fn:p=>p.dmg*=1.20},
   // Vida
   {ic:'\u2764\ufe0f',name:'+10 Vida',fn:p=>{p.maxHp+=10;p.hp+=10;}},
   {ic:'\u2764\ufe0f',name:'+20 Vida',fn:p=>{p.maxHp+=20;p.hp+=20;}},
@@ -714,8 +718,8 @@ const TOTEM_UPGRADES=[
   // Critico
   {ic:'\u26a1',name:'+5% Critico',fn:p=>p.critChance+=.05},
   {ic:'\u26a1',name:'+10% Critico',fn:p=>p.critChance+=.10},
-  {ic:'\ud83d\udd25',name:'+20% Dano Critico',fn:p=>p.critMult=(p.critMult||2)+.2},
-  {ic:'\ud83d\udd25',name:'+40% Dano Critico',fn:p=>p.critMult=(p.critMult||2)+.4},
+  {ic:'\ud83e\ude78',name:'+10% Regeneracion',fn:p=>p.regen=p.regen>0?p.regen*1.10:p.regen+1},
+  {ic:'\u2728',name:'+15% Experiencia',fn:p=>p.xpMult=(p.xpMult||1)+.15},
   // Vel. Ataque
   {ic:'\u23f1',name:'+5% Vel. Ataque',fn:p=>p.cdMult=Math.max(.3,p.cdMult*0.95)},
   {ic:'\u23f1',name:'+10% Vel. Ataque',fn:p=>p.cdMult=Math.max(.3,p.cdMult*0.90)},
@@ -804,12 +808,12 @@ function openMinimap(){
   if(G.curBoss&&G.enemies.includes(G.curBoss)){mctx.fillStyle='#ff44cc';mctx.beginPath();mctx.arc(G.curBoss.x*scale,G.curBoss.y*scale,8,0,Math.PI*2);mctx.fill();}
   mctx.strokeStyle='rgba(255,255,255,.3)';mctx.lineWidth=1;mctx.strokeRect(G.cam.x*scale,G.cam.y*scale,GW*scale,GH*scale);
   const p=G.player;mctx.fillStyle='#44ff88';mctx.beginPath();mctx.arc(p.x*scale,p.y*scale,6,0,Math.PI*2);mctx.fill();mctx.strokeStyle='#fff';mctx.lineWidth=2;mctx.beginPath();mctx.arc(p.x*scale,p.y*scale,6,0,Math.PI*2);mctx.stroke();
-  const t=~~G.time,dm=playerDmgMult(p);
+  const t=~~G.time;
   document.getElementById('st-hp').textContent=~~p.hp+'/'+p.maxHp;
   document.getElementById('st-sh').textContent=~~p.shield+'/'+p.maxShield;
   document.getElementById('st-mn').textContent=p.maxMana>0?(~~p.mana+'/'+p.maxMana):'N/A';
-  document.getElementById('st-dmg').textContent=p.baseDmg;
-  document.getElementById('st-lmult').textContent='x'+dm.toFixed(2);
+  document.getElementById('st-dmg').textContent=p.dmg.toFixed(1);
+  document.getElementById('st-lmult').textContent='+'+Math.round((p.baseCdMult/p.cdMult-1)*100)+'%';
   document.getElementById('st-crit').textContent=~~(p.critChance*100)+'%';
   document.getElementById('st-spd').textContent=p.speed.toFixed(2);
   document.getElementById('st-lv').textContent=p.level;
@@ -818,7 +822,7 @@ function openMinimap(){
   document.getElementById('st-wave').textContent=G.waveNum;
   document.getElementById('st-time').textContent=String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
   document.getElementById('st-map').textContent=G.mapDef.emoji+' '+G.mapDef.name;
-  document.getElementById('st-ot').textContent=G.overTime?('SI x'+G.overTimeMult.toFixed(1)):'NO';
+  document.getElementById('st-ot').textContent=G.overTime?('SI +'+Math.round((G.overTimeMult-1)*100)+'%'):'NO';
   document.getElementById('minimap-ov').classList.add('show');
 }
 function closeMinimap(){if(!G)return;G.minimapOpen=false;G.paused=false;document.getElementById('minimap-ov').classList.remove('show');}
@@ -852,27 +856,27 @@ function spawnMiniBoss(g){
 }
 function nearest(g){const p=g.player;let b=null,bd=Infinity;for(const e of g.enemies){const d=(e.x-p.x)**2+(e.y-p.y)**2;if(d<bd){bd=d;b=e;}}return b;}
 function aim(g){const t=nearest(g);return t?Math.atan2(t.y-g.player.y,t.x-g.player.x):(g.player.facing>0?0:Math.PI);}
-function calcD(g,base,crit){const p=g.player;let d=base*playerDmgMult(p);if(p.furyTimer>0)d*=2;return~~(d*(crit?(p.critMult||2):1));}
+function calcD(g,base,crit){const p=g.player;return~~(base*(crit?(p.critMult||2):1));}
 function isCrit(p){return Math.random()<p.critChance;}
 function addP(g,x,y,vx,vy,dmg,life,sc,type,col,crit,extra){const pl=g.player;g.projs.push({x,y,vx,vy,dmg,life:life*(pl.rangeMult||1),scale:sc*(pl.projSizeMult||1),type,col,crit:!!crit,...(extra||{})});}
-function fireSword(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.28,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*8,Math.sin(a)*8,calcD(g,p.baseDmg*2.2,c),75,p.projScale,'sword',c?'#ffff44':'#aaddff',c);}}
-function fireShieldBurst(g){const p=g.player;for(let i=0;i<12;i++){const a=(i/11)*Math.PI*2;addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,p.baseDmg*1.5,false),32,p.projScale*1.2,'shield','#6699ff',false);}p.shield=Math.min(p.maxShield,p.shield+18);}
-function fireFireball(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;if(p.maxMana>0){if(p.mana<12)return;p.mana-=12;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,p.baseDmg*2.8,c),95,p.projScale,'fireball','#ff6600',c);}}
-function fireLightning(g){const p=g.player;if(p.maxMana>0){if(p.mana<28)return;p.mana-=28;}const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);for(let i=0;i<Math.min(4,s.length);i++){const e=s[i],c=isCrit(p),d=calcD(g,p.baseDmg*4,c);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#88aaff',8);spawnDN(e.x,e.y,d,c,false);if(e.hp<=0)killE(g,g.enemies.indexOf(e));}for(let i=0;i<5;i++){const a=aim(g)+(Math.random()-.5)*.8;addP(g,p.x,p.y,Math.cos(a)*10,Math.sin(a)*10,0,10,p.projScale,'lightning','#88ccff',false);}}
-function fireArrow(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.2,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,p.baseDmg*1.8,c),95,p.projScale,'arrow',c?'#ffff44':'#ccaa44',c);}}
-function fireTrap(g){const p=g.player;g.traps.push({x:p.x+(Math.random()-.5)*70,y:p.y+(Math.random()-.5)*70,life:700,dmg:calcD(g,p.baseDmg*4.5,false),flashTimer:0});}
-function fireCurse(g){const p=g.player,a0=aim(g),n=2+p.extraKnives;if(p.maxMana>0){if(p.mana<9)return;p.mana-=9;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.45,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,p.baseDmg*1.9,c),125,p.projScale,'curse','#44ddcc',c);}}
-function fireDrain(g){const p=g.player;const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);let healed=0;for(let i=0;i<Math.min(3,s.length);i++){const e=s[i],d=calcD(g,p.baseDmg*2.8,false);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#44ddcc',5);healed+=d*.42;if(e.hp<=0)killE(g,g.enemies.indexOf(e));}if(healed>0){p.hp=Math.min(p.maxHp,p.hp+healed);spawnDN(p.x,p.y,healed,false,true);}const a0=aim(g);for(let i=0;i<4;i++)addP(g,p.x,p.y,Math.cos(a0+(Math.random()-.5))*6,Math.sin(a0+(Math.random()-.5))*6,0,12,p.projScale,'drain','#44ddcc',false);}
-function fireKunai(g){const p=g.player,a0=aim(g),n=2+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.3,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*13,Math.sin(a)*13,calcD(g,p.baseDmg*1.4,c),70,p.projScale*.8,'dagger',c?'#ffffaa':'#dde2ff',c);}}
-function fireDashSlash(g){const p=g.player,a0=aim(g),n=4+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.5,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*9,Math.sin(a)*9,calcD(g,p.baseDmg*1.8,c),28,p.projScale*1.1,'sword',c?'#ffff66':'#ff88aa',c,{pierce:2});}}
-function fireDagger(g){const p=g.player,a0=aim(g),n=3+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.38,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*11,Math.sin(a)*11,calcD(g,p.baseDmg*1.5,c),60,p.projScale*.8,'dagger',c?'#ffffaa':'#ccccff',c);}}
-function fireWhip(g){const p=g.player,a0=aim(g),n=6+p.extraKnives*2;for(let i=0;i<n;i++){const a=a0+(i/(n-1)-.5)*1.2;addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,p.baseDmg*1.8,false),42,p.projScale*1.1,'whip','#cc8822',false,{pierce:4});}}
-function fireBomb(g){const p=g.player,t=nearest(g);if(!t)return;const c=isCrit(p);addP(g,t.x,t.y,0,0,calcD(g,p.baseDmg*8,c),1,p.projScale*2.6,'bomb','#ff8800',c,{explode:true});}
-function fireSpear(g){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*14,Math.sin(a0)*14,calcD(g,p.baseDmg*5.5,c),110,p.projScale*1.4,'spear',c?'#ffffaa':'#ddaa44',c,{pierce:5});}
-function fireBook(g){const p=g.player,n=4+p.extraKnives,T2=Date.now();for(let i=0;i<n;i++){const a=T2/800+i*(Math.PI*2/n);g.projs.push({x:p.x+Math.cos(a)*55,y:p.y+Math.sin(a)*55,vx:0,vy:0,dmg:calcD(g,p.baseDmg*1.3,false),life:45,scale:p.projScale,type:'book',col:'#ff88ff',crit:false,orbit:true,orbitR:55,orbitA:a,orbitSpd:.045});}}
+function fireSword(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.28,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*8,Math.sin(a)*8,calcD(g,p.dmg*2.2,c),75,p.projScale,'sword',c?'#ffff44':'#aaddff',c);}}
+function fireShieldBurst(g){const p=g.player;for(let i=0;i<12;i++){const a=(i/11)*Math.PI*2;addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,p.dmg*1.5,false),32,p.projScale*1.2,'shield','#6699ff',false);}p.shield=Math.min(p.maxShield,p.shield+18);}
+function fireFireball(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;if(p.maxMana>0){if(p.mana<12)return;p.mana-=12;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.22,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,p.dmg*2.8,c),95,p.projScale,'fireball','#ff6600',c);}}
+function fireLightning(g){const p=g.player;if(p.maxMana>0){if(p.mana<28)return;p.mana-=28;}const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);for(let i=0;i<Math.min(4,s.length);i++){const e=s[i],c=isCrit(p),d=calcD(g,p.dmg*4,c);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#88aaff',8);spawnDN(e.x,e.y,d,c,false);if(e.hp<=0)killE(g,g.enemies.indexOf(e));}for(let i=0;i<5;i++){const a=aim(g)+(Math.random()-.5)*.8;addP(g,p.x,p.y,Math.cos(a)*10,Math.sin(a)*10,0,10,p.projScale,'lightning','#88ccff',false);}}
+function fireArrow(g){const p=g.player,a0=aim(g),n=1+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.2,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,p.dmg*1.8,c),95,p.projScale,'arrow',c?'#ffff44':'#ccaa44',c);}}
+function fireTrap(g){const p=g.player;g.traps.push({x:p.x+(Math.random()-.5)*70,y:p.y+(Math.random()-.5)*70,life:700,dmg:calcD(g,p.dmg*4.5,false),flashTimer:0});}
+function fireCurse(g){const p=g.player,a0=aim(g),n=2+p.extraKnives;if(p.maxMana>0){if(p.mana<9)return;p.mana-=9;}for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.45,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*5,Math.sin(a)*5,calcD(g,p.dmg*1.9,c),125,p.projScale,'curse','#44ddcc',c);}}
+function fireDrain(g){const p=g.player;const s=[...g.enemies].sort((a,b2)=>(a.x-p.x)**2+(a.y-p.y)**2-(b2.x-p.x)**2-(b2.y-p.y)**2);let healed=0;for(let i=0;i<Math.min(3,s.length);i++){const e=s[i],d=calcD(g,p.dmg*2.8,false);e.hp-=d;e.hf=12;spawnPs(g,e.x,e.y,'#44ddcc',5);healed+=d*.42;if(e.hp<=0)killE(g,g.enemies.indexOf(e));}if(healed>0){p.hp=Math.min(p.maxHp,p.hp+healed);spawnDN(p.x,p.y,healed,false,true);}const a0=aim(g);for(let i=0;i<4;i++)addP(g,p.x,p.y,Math.cos(a0+(Math.random()-.5))*6,Math.sin(a0+(Math.random()-.5))*6,0,12,p.projScale,'drain','#44ddcc',false);}
+function fireKunai(g){const p=g.player,a0=aim(g),n=2+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.3,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*13,Math.sin(a)*13,calcD(g,p.dmg*1.4,c),70,p.projScale*.8,'dagger',c?'#ffffaa':'#dde2ff',c);}}
+function fireDashSlash(g){const p=g.player,a0=aim(g),n=4+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.5,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*9,Math.sin(a)*9,calcD(g,p.dmg*1.8,c),28,p.projScale*1.1,'sword',c?'#ffff66':'#ff88aa',c,{pierce:2});}}
+function fireDagger(g){const p=g.player,a0=aim(g),n=3+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.38,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*11,Math.sin(a)*11,calcD(g,p.dmg*1.5,c),60,p.projScale*.8,'dagger',c?'#ffffaa':'#ccccff',c);}}
+function fireWhip(g){const p=g.player,a0=aim(g),n=6+p.extraKnives*2;for(let i=0;i<n;i++){const a=a0+(i/(n-1)-.5)*1.2;addP(g,p.x,p.y,Math.cos(a)*6,Math.sin(a)*6,calcD(g,p.dmg*1.8,false),42,p.projScale*1.1,'whip','#cc8822',false,{pierce:4});}}
+function fireBomb(g){const p=g.player,t=nearest(g);if(!t)return;const c=isCrit(p);addP(g,t.x,t.y,0,0,calcD(g,p.dmg*8,c),1,p.projScale*2.6,'bomb','#ff8800',c,{explode:true});}
+function fireSpear(g){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*14,Math.sin(a0)*14,calcD(g,p.dmg*5.5,c),110,p.projScale*1.4,'spear',c?'#ffffaa':'#ddaa44',c,{pierce:5});}
+function fireBook(g){const p=g.player,n=4+p.extraKnives,T2=Date.now();for(let i=0;i<n;i++){const a=T2/800+i*(Math.PI*2/n);g.projs.push({x:p.x+Math.cos(a)*55,y:p.y+Math.sin(a)*55,vx:0,vy:0,dmg:calcD(g,p.dmg*1.3,false),life:45,scale:p.projScale,type:'book',col:'#ff88ff',crit:false,orbit:true,orbitR:55,orbitA:a,orbitSpd:.045});}}
 // Armas de fuego de Leon/Snake
-function fireHandgun(g){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*15,Math.sin(a0)*15,calcD(g,p.baseDmg*2.2,c),80,p.projScale*.8,'arrow',c?'#ffff66':'#ffe080',c);spawnPs(g,p.x+Math.cos(a0)*14,p.y+Math.sin(a0)*14,'#ffcc66',3);}
-function fireShotgun(g){const p=g.player,a0=aim(g),n=5+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.16,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,p.baseDmg*1.3,c),34,p.projScale*.7,'arrow',c?'#ffff66':'#ffbb55',c);}flashScreen('#ffaa44');}
+function fireHandgun(g){const p=g.player,a0=aim(g),c=isCrit(p);addP(g,p.x,p.y,Math.cos(a0)*15,Math.sin(a0)*15,calcD(g,p.dmg*2.2,c),80,p.projScale*.8,'arrow',c?'#ffff66':'#ffe080',c);spawnPs(g,p.x+Math.cos(a0)*14,p.y+Math.sin(a0)*14,'#ffcc66',3);}
+function fireShotgun(g){const p=g.player,a0=aim(g),n=5+p.extraKnives;for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.16,c=isCrit(p);addP(g,p.x,p.y,Math.cos(a)*12,Math.sin(a)*12,calcD(g,p.dmg*1.3,c),34,p.projScale*.7,'arrow',c?'#ffff66':'#ffbb55',c);}flashScreen('#ffaa44');}
 const FIRES={sword:fireSword,shieldBurst:fireShieldBurst,fireball:fireFireball,lightning:fireLightning,arrow:fireArrow,trap:fireTrap,curse:fireCurse,drain:fireDrain,dagger:fireDagger,whip:fireWhip,bomb:fireBomb,spear:fireSpear,book:fireBook,kunai:fireKunai,dashSlash:fireDashSlash,handgun:fireHandgun,shotgun:fireShotgun};
 
 function spawnPs(g,x,y,col,n=5){if(g.parts.length>520)return;for(let i=0;i<~~(n*.8);i++){const a=Math.random()*Math.PI*2,s=.8+Math.random()*4.2;g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,size:3+~~(Math.random()*5),life:24+~~(Math.random()*24),maxLife:48});}}
@@ -946,7 +950,7 @@ function goNextMap(){
   if(ni>=MAPS.length){document.getElementById('go-title').textContent='VICTORIA!';document.getElementById('go-title').style.color='#f0c040';document.getElementById('go-stats').textContent='Has conquistado los 4 mundos!\n\nHEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nNIVEL: '+G.player.level+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount;document.getElementById('go-ov').classList.add('show');return;}
   if(!unlockedMaps.includes(ni))unlockedMaps.push(ni);
   G.running=false;persistentPlayer._weapons=G.weapons;
-  document.getElementById('mt-title').textContent='NIVEL COMPLETADO';document.getElementById('mt-map').textContent=MAPS[ni].emoji+' '+MAPS[ni].name;document.getElementById('mt-sub').textContent='Dificultad x'+MAPS[ni].diffMult+' — Tu progreso se mantiene!';document.getElementById('map-trans').classList.add('show');
+  document.getElementById('mt-title').textContent='NIVEL COMPLETADO';document.getElementById('mt-map').textContent=MAPS[ni].emoji+' '+MAPS[ni].name;document.getElementById('mt-sub').textContent='Dificultad +'+Math.round((MAPS[ni].diffMult-1)*100)+'% — Tu progreso se mantiene!';document.getElementById('map-trans').classList.add('show');
   setTimeout(()=>{document.getElementById('map-trans').classList.remove('show');curMapIdx=ni;chestsOpened=~~(chestsOpened*.7);initGame(G.player.charKey,curMapIdx,true);G.running=true;lastTime=performance.now();startLoop();},3800);
 }
 
@@ -992,7 +996,7 @@ function update(ts){
   if(!G.portal.visible&&G.time>=md.portalTime&&G.b1Spawned&&!G.curBoss){G.portal.visible=true;annPortal('🌀 PORTAL ABIERTO a los 10 min!\nAcercate y presiona [E] para activarlo.');}
   // Overtime
   if(G.portal.visible&&!G.portal.activated&&!G.overTime&&G.time>=md.portalTime+120){G.overTime=true;G.overTimeTimer=0;document.getElementById('danger-flash').classList.add('show');annWave('PELIGRO! Dificultad sube cada 30s!');}
-  if(G.overTime){G.overTimeTimer+=dt;if(G.overTimeTimer>=CONFIG.OVERTIME_STEP){G.overTimeTimer=0;G.overTimeMult+=.5;annWave('DIFICULTAD x'+G.overTimeMult.toFixed(1)+'!');}}
+  if(G.overTime){G.overTimeTimer+=dt;if(G.overTimeTimer>=CONFIG.OVERTIME_STEP){G.overTimeTimer=0;G.overTimeMult+=.5;annWave('DIFICULTAD +'+Math.round((G.overTimeMult-1)*100)+'%!');}}
   // Bosses
   if(!G.b1Spawned&&G.time>=md.bossTime){G.b1Spawned=true;spawnBossE(G,md.boss1,false);}
   if(!G.b2Spawned&&G.time>=md.boss2Time&&!G.curBoss){G.b2Spawned=true;spawnBossE(G,md.boss2,false);}
@@ -1007,13 +1011,13 @@ function update(ts){
   // Weapons
   for(const w of G.weapons){w.timer-=dt;if(w.timer<=0){w.timer=w.cd*p.cdMult;if(FIRES[w.fire])FIRES[w.fire](G);}}
   // Projectiles
-  for(let i=G.projs.length-1;i>=0;i--){const pr=G.projs[i];if(pr.orbit){pr.orbitA+=pr.orbitSpd;pr.x=p.x+Math.cos(pr.orbitA)*pr.orbitR;pr.y=p.y+Math.sin(pr.orbitA)*pr.orbitR;}else{const _pm=GAME_SPEED*(pr.fromBoss?1:(p.projSpeedMult||1));pr.x+=pr.vx*_pm;pr.y+=pr.vy*_pm;}pr.life--;if(pr.life<=0){if(pr.explode)explodeBomb(G,pr);G.projs.splice(i,1);continue;}if(pr.fromBoss){if(overlap(pr.x,pr.y,6,6,p.x,p.y,p.w,p.h)){damageP(G,pr.dmg);G.projs.splice(i,1);}continue;}let hit=false;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(!overlap(pr.x,pr.y,6*pr.scale,6*pr.scale,e.x,e.y,e.w,e.h))continue;if(pr.dmg>0){e.hp-=pr.dmg;e.hf=8;spawnPs(G,e.x,e.y,'#ff4444',6);spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(p.burn>0){e.burnT=120;e.burnDmg=(p.baseDmg*playerDmgMult(p))*.25*p.burn;}if(p.vampiric>0)p.hp=Math.min(p.maxHp,p.hp+pr.dmg*p.vampiric);if(e.hp<=0){killE(G,j);continue;}}if(pr.pierce&&pr.pierce>0)pr.pierce--;else if(!['shield','lightning','drain','whip'].includes(pr.type)&&!pr.orbit){hit=true;break;}}if(hit)G.projs.splice(i,1);}
+  for(let i=G.projs.length-1;i>=0;i--){const pr=G.projs[i];if(pr.orbit){pr.orbitA+=pr.orbitSpd;pr.x=p.x+Math.cos(pr.orbitA)*pr.orbitR;pr.y=p.y+Math.sin(pr.orbitA)*pr.orbitR;}else{const _pm=GAME_SPEED*(pr.fromBoss?1:(p.projSpeedMult||1));pr.x+=pr.vx*_pm;pr.y+=pr.vy*_pm;}pr.life--;if(pr.life<=0){if(pr.explode)explodeBomb(G,pr);G.projs.splice(i,1);continue;}if(pr.fromBoss){if(overlap(pr.x,pr.y,6,6,p.x,p.y,p.w,p.h)){damageP(G,pr.dmg);G.projs.splice(i,1);}continue;}let hit=false;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(!overlap(pr.x,pr.y,6*pr.scale,6*pr.scale,e.x,e.y,e.w,e.h))continue;if(pr.dmg>0){e.hp-=pr.dmg;e.hf=8;spawnPs(G,e.x,e.y,'#ff4444',6);spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(p.burn>0){e.burnT=120;e.burnDmg=p.dmg*.25*p.burn;}if(p.vampiric>0)p.hp=Math.min(p.maxHp,p.hp+pr.dmg*p.vampiric);if(e.hp<=0){killE(G,j);continue;}}if(pr.pierce&&pr.pierce>0)pr.pierce--;else if(!['shield','lightning','drain','whip'].includes(pr.type)&&!pr.orbit){hit=true;break;}}if(hit)G.projs.splice(i,1);}
   // Traps
   for(let i=G.traps.length-1;i>=0;i--){const t=G.traps[i];t.life--;if(t.life<=0){G.traps.splice(i,1);continue;}for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(overlap(t.x,t.y,22,22,e.x,e.y,e.w,e.h)){e.hp-=t.dmg*dt*3.5;e.hf=6;t.flashTimer=8;if(e.hp<=0)killE(G,j);}}}
   // Orbs
-  if(p.orbCount>0)for(let i=0;i<p.orbCount;i++){const a=Date.now()/640+i*(Math.PI*2/p.orbCount),ox=p.x+Math.cos(a)*38,oy=p.y+Math.sin(a)*22;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(ox-e.x,oy-e.y)<18){const od=calcD(G,p.baseDmg*.8,false);e.hp-=od;e.hf=3;if(e.hp<=0)killE(G,j);}}}
+  if(p.orbCount>0)for(let i=0;i<p.orbCount;i++){const a=Date.now()/640+i*(Math.PI*2/p.orbCount),ox=p.x+Math.cos(a)*38,oy=p.y+Math.sin(a)*22;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(ox-e.x,oy-e.y)<18){const od=calcD(G,p.dmg*.8,false);e.hp-=od;e.hf=3;if(e.hp<=0)killE(G,j);}}}
   // Aura: dana continuamente a los enemigos cercanos
-  if(p.auraDmg>0){for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(p.x-e.x,p.y-e.y)<p.auraR){e.hp-=p.auraDmg*playerDmgMult(p)*dt*3;e.hf=2;if(e.hp<=0)killE(G,j);}}if(Math.random()<.25)spawnPs(G,p.x+(Math.random()-.5)*p.auraR,p.y+(Math.random()-.5)*p.auraR,'#ffcc66',1);}
+  if(p.auraDmg>0){for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(p.x-e.x,p.y-e.y)<p.auraR){e.hp-=p.auraDmg*p.dmg*.6*dt*3;e.hf=2;if(e.hp<=0)killE(G,j);}}if(Math.random()<.25)spawnPs(G,p.x+(Math.random()-.5)*p.auraR,p.y+(Math.random()-.5)*p.auraR,'#ffcc66',1);}
   // Enemy AI: TODOS persiguen al jugador SIEMPRE (sin limite por distancia ni "dormirse"). O(n) por frame.
   const stealthed=p.stealthTimer>0;
   const tx=p.x+(p._vx||0)*9,ty=p.y+(p._vy||0)*9; // prediccion: apuntan a donde IRA el jugador
@@ -1072,8 +1076,8 @@ function levelUp(){
 
 function gameOver(){
   if(!G||!G.running)return;G.running=false;document.getElementById('danger-flash').classList.remove('show');
-  const t=~~G.time,dm=playerDmgMult(G.player);
-  document.getElementById('go-stats').textContent='HEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nMAPA: '+G.mapDef.emoji+' '+G.mapDef.name+'\nNIVEL: '+G.player.level+'\nDANO MULT: x'+dm.toFixed(2)+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\nTIEMPO: '+String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')+'\nOLA: '+G.waveNum+(G.overTime?'\nOVERTIME: x'+G.overTimeMult.toFixed(1):'');
+  const t=~~G.time;
+  document.getElementById('go-stats').textContent='HEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nMAPA: '+G.mapDef.emoji+' '+G.mapDef.name+'\nNIVEL: '+G.player.level+'\nDANO: '+G.player.dmg.toFixed(1)+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\nTIEMPO: '+String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')+'\nOLA: '+G.waveNum+(G.overTime?'\nOVERTIME: +'+Math.round((G.overTimeMult-1)*100)+'%':'');
   document.getElementById('go-ov').classList.add('show');document.getElementById('boss-bar-wrap').classList.remove('show');
 }
 
