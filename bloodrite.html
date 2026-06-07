@@ -992,7 +992,7 @@ dp2(document.getElementById('prev-snake'),c=>{r2(c,8,2,32,7,'#7a8a5a');r2(c,6,4,
 // Game state
 let G=null,selChar='knight',lastTime=0,curMapIdx=0,chestsOpened=0;
 let persistentPlayer=null,_loopAlive=false;
-function getChestCost(){return 30*Math.pow(2,chestsOpened);}
+function getChestCost(){return Math.round(25*Math.pow(1.55,chestsOpened));} // FASE 4: economia mas suave (antes 30*2^n se disparaba)
 function cloneW(k){return CHARS[k].weapons.map(w=>({...w}));}
 
 function makePlayer(ck){
@@ -1204,6 +1204,7 @@ function drawFrame(){
   for(const c of G.coinItems)drawCoin(c,CX,CY);for(const c of G.chests)drawChest(c,CX,CY);for(const t of G.totems)drawTotem(t,CX,CY);for(const t of G.traps)drawTrap(t,CX,CY);for(const pk of G.pickups)drawPickup(pk,CX,CY);for(const p of G.parts)drawPart(p,CX,CY);for(const pr of G.projs)drawPR(pr,CX,CY);for(const e of G.enemies)drawE(e,CX,CY);for(const gem of G.gems)drawGem(gem,CX,CY);drawPL(G.player,CX,CY);
   if(G.player.hitFlash>0){ctx.save();ctx.globalAlpha=Math.min(.55,G.player.hitFlash/12);ctx.fillStyle='#ff2222';ctx.fillRect(GW/2-18,GH/2-32,36,46);ctx.restore();} // flash rojo sobre el jugador
   if(G.overTime)pxa(0,0,GW,GH,'#cc0000',Math.min(.28,G.overTimeMult*.06)*(.5+Math.sin(Date.now()/500)*.5));
+  const _hpf=G.player.hp/Math.max(1,G.player.maxHp);if(_hpf<.30){const a=(.30-_hpf)/.30,rg=ctx.createRadialGradient(GW/2,GH/2,GW*.30,GW/2,GH/2,GW*.62);rg.addColorStop(0,'transparent');rg.addColorStop(1,'rgba(170,0,0,'+(a*(.4+Math.sin(Date.now()/240)*.3)).toFixed(3)+')');ctx.fillStyle=rg;ctx.fillRect(0,0,GW,GH);} // FASE 4: vineta de vida baja
   const lg=ctx.createRadialGradient(GW/2,GH/2,10,GW/2,GH/2,190);lg.addColorStop(0,'rgba(255,240,205,.10)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.fillRect(0,0,GW,GH); // luz ambiental suave alrededor del jugador
   const vg=ctx.createRadialGradient(GW/2,GH/2,GW*.07,GW/2,GH/2,GW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(4,0,8,.4)');ctx.fillStyle=vg;ctx.fillRect(0,0,GW,GH);ctx.restore();
 }
@@ -1217,7 +1218,7 @@ function maybeDropSurvival(g,e){if(e.isBoss)return;if(Math.random()<.14)spawnPic
 function killE(g,idx){
   const e=g.enemies[idx];if(!e||idx<0)return;maybeDropSurvival(g,e);
   for(let k=0;k<3;k++)g.gems.push({x:e.x+(Math.random()-.5)*24,y:e.y+(Math.random()-.5)*24,val:~~(e.xp/3)});
-  if(Math.random()<.38)g.coinItems.push({x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,val:1+~~(Math.random()*3),life:700});
+  if(Math.random()<.46)g.coinItems.push({x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,val:Math.max(1,~~((1+Math.random()*3)*(1+curMapIdx*.35))),life:700}); // FASE 4: oro mas frecuente y escala por bioma
   spawnPs(g,e.x,e.y,e.col,12);g.kills++;g.runKills=(g.runKills||0)+1;
   if(e.isBoss){if(e.isFinalBoss){g.bfKilled=true;SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;g.portal.visible=true;annPortal('BOSS FINAL DERROTADO!\nPresiona [E] en el PORTAL para avanzar.');}
     document.getElementById('boss-bar-wrap').classList.remove('show');g.curBoss=null;flashScreen('#ffffff');
@@ -1366,7 +1367,7 @@ function applyChestReward(rw){
 }
 function openChest(g,chest){
   const cost=getChestCost();if(g.coinCount<cost){annWave('Necesitas 🪙'+cost);return;}
-  g.coinCount-=cost;document.getElementById('coin-v').textContent=g.coinCount;chestsOpened++;g.runChests=(g.runChests||0)+1;
+  g.coinCount-=cost;setTxt('coin-v',g.coinCount);chestsOpened++;g.runChests=(g.runChests||0)+1;
   const rw=rollChestReward();chest.reward=rw;chest.open=true;chestPending={chest,rw,applied:false};g.paused=true;
   const ov=document.getElementById('chest-ov');ov.style.setProperty('--rc',RC2[rw.rarity]);
   const c3=document.getElementById('chest-3d'),beam=document.getElementById('chest-beam'),rays=document.getElementById('chest-rays'),rev=document.getElementById('chest-reveal'),acts=document.getElementById('chest-actions'),flash=document.getElementById('rarity-flash');
@@ -1463,9 +1464,12 @@ function update(ts){
   if(p.orbCount>0)for(let i=0;i<p.orbCount;i++){const a=Date.now()/640+i*(Math.PI*2/p.orbCount),ox=p.x+Math.cos(a)*38,oy=p.y+Math.sin(a)*22;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(ox-e.x,oy-e.y)<18){const od=calcD(G,p.baseDmg*.8,false);e.hp-=od;e.hf=3;if(e.hp<=0)killE(G,j);}}}
   // Aura: dana continuamente a los enemigos cercanos
   if(p.auraDmg>0){for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(Math.hypot(p.x-e.x,p.y-e.y)<p.auraR){e.hp-=p.auraDmg*playerDmgMult(p)*dt*3;e.hf=2;if(e.hp<=0)killE(G,j);}}if(Math.random()<.25)spawnPs(G,p.x+(Math.random()-.5)*p.auraR,p.y+(Math.random()-.5)*p.auraR,'#ffcc66',1);}
-  // Enemy AI: TODOS persiguen al jugador SIEMPRE (sin limite por distancia ni "dormirse"). O(n) por frame.
+  // Enemy AI: TODOS persiguen al jugador SIEMPRE (sin limite por distancia ni "dormirse").
   const stealthed=p.stealthTimer>0;
   const tx=p.x+(p._vx||0)*9,ty=p.y+(p._vy||0)*9; // prediccion: apuntan a donde IRA el jugador
+  // FASE 4 IA: grid espacial para separacion (anti-amontonamiento), acotado para mantener 60 FPS
+  const CELL=44,egrid=G._egrid||(G._egrid=new Map());egrid.clear();
+  for(let i=0;i<G.enemies.length;i++){const e=G.enemies[i];const k=(e.x/CELL|0)+'_'+(e.y/CELL|0);let a=egrid.get(k);if(!a){a=[];egrid.set(k,a);}a.push(e);}
   for(let i=G.enemies.length-1;i>=0;i--){const e=G.enemies[i];
     if(e.burnT>0){e.burnT--;e.hp-=(e.burnDmg||0)*dt;if(Math.random()<.25)spawnPs(G,e.x,e.y,'#ff7722',1);if(e.hp<=0){killE(G,i);continue;}}
     let gx=tx,gy=ty;
@@ -1473,6 +1477,12 @@ function update(ts){
     let dx=gx-e.x,dy=gy-e.y;const dist=Math.hypot(dx,dy)||1;dx/=dist;dy/=dist;
     // Enemigos rapidos: rodean al jugador cuando estan cerca (componente tangencial)
     if(!stealthed&&e.spd>=1.4&&dist<170){const tpx=-dy,tpy=dx,sgn=(i&1)?1:-1;dx+=tpx*0.7*sgn;dy+=tpy*0.7*sgn;const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;}
+    // Separacion: empuja lejos de vecinos cercanos (max 10 comparaciones por enemigo)
+    if(!stealthed){let sx=0,sy=0,chk=0;const cx=e.x/CELL|0,cy=e.y/CELL|0;
+      for(let ox=-1;ox<=1&&chk<10;ox++)for(let oy=-1;oy<=1&&chk<10;oy++){const a=egrid.get((cx+ox)+'_'+(cy+oy));if(!a)continue;for(let n=0;n<a.length&&chk<10;n++){const o=a[n];if(o===e)continue;chk++;const ddx=e.x-o.x,ddy=e.y-o.y,d2=ddx*ddx+ddy*ddy;if(d2>0&&d2<900){const inv=1/Math.sqrt(d2);sx+=ddx*inv;sy+=ddy*inv;}}}
+      if(sx||sy){const sl=Math.hypot(sx,sy)||1;dx+=(sx/sl)*0.5;dy+=(sy/sl)*0.5;const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;}}
+    // Murcielagos: vuelo erratico
+    if(e.skin==='bat'){e.wob=(e.wob||Math.random()*6.28)+.32;dx+=Math.cos(e.wob)*.42;dy+=Math.sin(e.wob)*.42;const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;}
     const es=e.spd*GAME_SPEED*(stealthed?.4:1);
     e.x+=dx*es;e.y+=dy*es;
     e.animTimer+=dt;if(e.animTimer>.22){e.animFrame++;e.animTimer=0;}
@@ -1482,7 +1492,7 @@ function update(ts){
   // Gems
   for(let i=G.gems.length-1;i>=0;i--){const gem=G.gems[i];const dx=p.x-gem.x,dy=p.y-gem.y,d=Math.hypot(dx,dy);if(d<p.xpRadius){gem.x+=dx*.16;gem.y+=dy*.16;}if(d<16){p.xp+=Math.ceil(gem.val*(p.xpMult||1));G.gems.splice(i,1);if(p.xp>=p.xpNext)levelUp();}}
   // Coins
-  for(let i=G.coinItems.length-1;i>=0;i--){const c=G.coinItems[i];c.life--;const dx=p.x-c.x,dy=p.y-c.y,dist=Math.hypot(dx,dy);if(dist<p.xpRadius*.85){c.x+=dx*.14;c.y+=dy*.14;}if(dist<17){G.coinCount+=c.val;G.runCoins=(G.runCoins||0)+c.val;document.getElementById('coin-v').textContent=G.coinCount;spawnDN(c.x,c.y,c.val,false,false,true);G.coinItems.splice(i,1);}else if(c.life<=0)G.coinItems.splice(i,1);}
+  for(let i=G.coinItems.length-1;i>=0;i--){const c=G.coinItems[i];c.life--;const dx=p.x-c.x,dy=p.y-c.y,dist=Math.hypot(dx,dy);if(dist<p.xpRadius*.85){c.x+=dx*.14;c.y+=dy*.14;}if(dist<17){G.coinCount+=c.val;G.runCoins=(G.runCoins||0)+c.val;setTxt('coin-v',G.coinCount);spawnDN(c.x,c.y,c.val,false,false,true);G.coinItems.splice(i,1);}else if(c.life<=0)G.coinItems.splice(i,1);}
   // Pickups
   for(let i=G.pickups.length-1;i>=0;i--){const it=G.pickups[i];it.life--;it.bob+=.18;const dx=p.x-it.x,dy=p.y-it.y,dist=Math.hypot(dx,dy);if(dist<p.xpRadius*.7){it.x+=dx*.08;it.y+=dy*.08;}if(dist<18){if(it.type==='hp'){const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+it.val);if(p.hp>before)spawnDN(it.x,it.y,it.val,false,true,false);}else{const before=p.shield;p.shield=Math.min(p.maxShield,p.shield+it.val);if(p.shield>before)spawnPs(G,it.x,it.y,'#55bbff',6);}G.pickups.splice(i,1);continue;}if(it.life<=0)G.pickups.splice(i,1);}
   // Parts
@@ -1503,29 +1513,45 @@ function updateFps(ts){
 }
 function explodeBomb(g,pr){const rad=62*pr.scale;for(let j=g.enemies.length-1;j>=0;j--){const e=g.enemies[j];if(Math.hypot(e.x-pr.x,e.y-pr.y)<rad){e.hp-=pr.dmg;e.hf=14;spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(e.hp<=0)killE(g,j);}}spawnPs(g,pr.x,pr.y,'#ff8800',30);spawnPs(g,pr.x,pr.y,'#ffdd00',20);g.shake=Math.max(g.shake,10);flashScreen('#ffaa00');}
 
+// FASE 4: cache de nodos del HUD + escritura solo si cambia (evita writes DOM por frame -> 60 FPS)
+const _hudc={};
+function H(id){return _hudc[id]||(_hudc[id]=document.getElementById(id));}
+function setTxt(id,v){const el=H(id);if(el&&el._v!==v){el.textContent=v;el._v=v;}}
+function setW(id,v){const el=H(id);if(el&&el._w!==v){el.style.width=v;el._w=v;}}
+function setHTML(id,v){const el=H(id);if(el&&el._h!==v){el.innerHTML=v;el._h=v;}}
 function updateHUD(){
   const p=G.player,md=G.mapDef;
-  const _hpw=(Math.max(0,p.hp)/Math.max(1,p.maxHp)*100)+'%';document.getElementById('hp-b').style.width=_hpw;document.getElementById('hp-ghost').style.width=_hpw;document.getElementById('hp-v').textContent=Math.round(Math.max(0,p.hp))+'/'+Math.max(1,Math.round(p.maxHp));
-  document.getElementById('sh-b').style.width=(p.maxShield>0?(Math.max(0,p.shield)/p.maxShield*100):0)+'%';document.getElementById('sh-v').textContent=Math.max(0,Math.round(p.shield))+'/'+Math.max(0,Math.round(p.maxShield));
-  document.getElementById('xp-b').style.width=(p.xp/p.xpNext*100)+'%';document.getElementById('xp-v').textContent=p.xp+'/'+p.xpNext;
-  document.getElementById('lv-v').textContent=p.level;document.getElementById('kills-v').textContent=G.kills;document.getElementById('wave-v').textContent=G.waveNum;
-  const t=~~G.time;document.getElementById('timer-v').textContent=String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
-  if(p.maxMana>0){document.getElementById('mn-b').style.width=(Math.max(0,p.mana)/p.maxMana*100)+'%';document.getElementById('mn-v').textContent=Math.round(Math.max(0,p.mana))+'/'+Math.max(0,Math.round(p.maxMana));}else{document.getElementById('mn-b').style.width='0%';document.getElementById('mn-v').textContent='N/A';}
+  const _hpw=(Math.max(0,p.hp)/Math.max(1,p.maxHp)*100)+'%';setW('hp-b',_hpw);setW('hp-ghost',_hpw);setTxt('hp-v',Math.round(Math.max(0,p.hp))+'/'+Math.max(1,Math.round(p.maxHp)));
+  setW('sh-b',(p.maxShield>0?(Math.max(0,p.shield)/p.maxShield*100):0)+'%');setTxt('sh-v',Math.max(0,Math.round(p.shield))+'/'+Math.max(0,Math.round(p.maxShield)));
+  setW('xp-b',(p.xp/p.xpNext*100)+'%');setTxt('xp-v',p.xp+'/'+p.xpNext);
+  setTxt('lv-v',p.level);setTxt('kills-v',G.kills);setTxt('wave-v',G.waveNum);
+  const t=~~G.time;setTxt('timer-v',String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'));
+  if(p.maxMana>0){setW('mn-b',(Math.max(0,p.mana)/p.maxMana*100)+'%');setTxt('mn-v',Math.round(Math.max(0,p.mana))+'/'+Math.max(0,Math.round(p.maxMana)));}else{setW('mn-b','0%');setTxt('mn-v','N/A');}
   const slots=document.querySelectorAll('.ws');G.weapons.forEach((w,i)=>{if(slots[i]){const ov=slots[i].querySelector('.cdov');if(ov)ov.style.transform='scaleY('+Math.max(0,Math.min(1,w.timer/(w.cd*p.cdMult)))+')';} });
-  const pass=[];if(p.vampiric>0)pass.push('🧛'+~~(p.vampiric*100)+'%');if(p.critChance>0)pass.push('⚡'+~~(p.critChance*100)+'%');if(p.furyTimer>0)pass.push('🔥');document.getElementById('pass-list').innerHTML=pass.map(x=>'<span>'+x+'</span>').join('');
+  // HUD avanzado: build, sinergias activas, tomos y enemigos vivos (con dirty-check para no escribir cada frame)
+  const pass=[];
+  if(p.critChance>0)pass.push('🎯'+~~(p.critChance*100)+'%');
+  if(p.vampiric>0)pass.push('🧛'+~~(p.vampiric*100)+'%');
+  if((p.resist||0)>0)pass.push('🛡'+~~(p.resist*100)+'%');
+  if(p.orbCount>0)pass.push('🌀'+p.orbCount);
+  if(p.extraKnives>0)pass.push('🗡+'+p.extraKnives);
+  if(p.burn>0)pass.push('🔥'+p.burn);
+  if(p.furyTimer>0)pass.push('💢');
+  pass.push('👹'+G.enemies.length);
+  const tomeIcos=(SAVE.equippedTomes||[]).map(id=>TOME_BY[id]?TOME_BY[id].ico:'').join('');
+  setHTML('pass-list',pass.map(x=>'<span>'+x+'</span>').join('')+(tomeIcos?'<span style="opacity:.85">📚'+tomeIcos+'</span>':''));
   let phase='';if(G.bfKilled)phase='🌀 [E] Portal -> siguiente';else if(G.bfSpawned)phase='☠ JEFE FINAL';else if(G.overTime)phase='🔥 PELIGRO x'+G.overTimeMult.toFixed(1);else if(G.portal.visible&&!G.portal.activated)phase='🌀 [E] Portal disponible';else if(G.b2Spawned)phase='☠ BOSS 2';else if(G.b1Spawned&&!G.curBoss&&G.time<md.portalTime)phase='Portal en '+(~~Math.max(0,md.portalTime-G.time))+'s';else if(G.b1Spawned)phase='☠ BOSS 1';else phase='Boss en '+(~~Math.max(0,md.bossTime-G.time))+'s';
-  document.getElementById('phase-hud').textContent=phase;
-  // Indicador de habilidad especial (tecla Q): muestra LISTA o el cooldown restante
-  const si=document.getElementById('special-ind'),sp=SPECIALS[p.charKey];
+  setTxt('phase-hud',phase);
+  const si=H('special-ind'),sp=SPECIALS[p.charKey];
   if(sp){si.style.display='flex';const ready=p.specialCdTimer<=0;si.classList.toggle('ready',ready);
-    si.innerHTML='<span class="si-ico">'+sp.icon+'</span>[Q] '+sp.name+' '+(p.stealthTimer>0?'ACTIVA':(ready?'LISTA':Math.ceil(p.specialCdTimer)+'s'));
+    setHTML('special-ind','<span class="si-ico">'+sp.icon+'</span>[Q] '+sp.name+' '+(p.stealthTimer>0?'ACTIVA':(ready?'LISTA':Math.ceil(p.specialCdTimer)+'s')));
   }else{si.style.display='none';}
 }
 function renderWS(){const c=document.getElementById('weapon-slots');c.innerHTML='';G.weapons.forEach(w=>{const d=document.createElement('div');d.className='ws active';d.innerHTML=w.emoji+'<span class="ws-lbl">'+w.name+'</span><div class="cdov"></div>';c.appendChild(d);});}
 
 function levelUp(){
-  const p=G.player;p.level++;p.xp-=p.xpNext;p.xpNext=~~(p.xpNext*1.40);checkMissions();// harder XP curve
-  p.hp=Math.min(p.maxHp,p.hp+8);p.shield=Math.min(p.maxShield,p.shield+6);G.paused=true;
+  const p=G.player;p.level++;p.xp-=p.xpNext;p.xpNext=~~(p.xpNext*1.34);checkMissions();// FASE 4: curva XP mas suave (1.34)
+  p.hp=Math.min(p.maxHp,p.hp+~~(p.maxHp*.06)+4);p.shield=Math.min(p.maxShield,p.shield+~~(p.maxShield*.06));G.paused=true; // cura por % de vida
   const lw=p.level<4?[4,2,.4]:[3,2,1.1];const wm={common:lw[0],rare:lw[1],epic:lw[2],legendary:p.level<5?0:0.6};const weighted=[];for(const u of UPGRADES){const w=wm[u.rarity]||1;for(let i=0;i<~~(w*8);i++)weighted.push(u);}
   const picks=[],seen=new Set();while(picks.length<3&&weighted.length){const u=weighted[~~(Math.random()*weighted.length)];if(!seen.has(u.id)){seen.add(u.id);picks.push(u);}}
   const ov=document.getElementById('lu-ov'),cards=document.getElementById('lu-cards');cards.innerHTML='';picks.forEach(u=>{const card=document.createElement('div');card.className='ucard r-'+u.rarity;card.innerHTML='<div class="ucard-icon">'+u.icon+'</div><div class="ucard-name">'+u.name+'</div><div class="ucard-rar" style="color:'+RC[u.rarity]+'">'+RL[u.rarity]+'</div><div class="ucard-desc">'+u.desc+'</div>';card.onclick=()=>{u.apply(G);ov.classList.remove('show');G.paused=false;};cards.appendChild(card);});ov.classList.add('show');
