@@ -223,6 +223,11 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 /* ===== FASE 2: cofres Megabonk, misiones, skins, objetos ===== */
 /* Rarezas */
 .r-common{--rc:#b8b8c0;}.r-rare{--rc:#3b9dff;}.r-epic:not(.ucard){--rc:#b455ff;}.r-legendary{--rc:#ffb000;}
+.r-mythic{--rc:#ff3df0;}
+.skin-card.r-mythic,.tome-card.r-mythic{animation:mythGlow 1.8s ease-in-out infinite;}
+@keyframes mythGlow{0%,100%{box-shadow:0 0 10px #ff3df0;border-color:#ff3df0;}50%{box-shadow:0 0 20px #7a3aff;border-color:#7a3aff;}}
+.skin-card.r-mythic .skin-rar{animation:mythHue 3s linear infinite;}
+@keyframes mythHue{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(360deg);}}
 /* Cofre estilo Megabonk: secuencia animada (sacudida -> estallido -> revelado) */
 #chest-ov{perspective:800px;}
 #chest-stage{position:relative;width:340px;height:300px;display:flex;align-items:center;justify-content:center;}
@@ -730,6 +735,11 @@ const BIOME_FX=[
 const _glowCache={};
 function glowSprite(col){if(_glowCache[col])return _glowCache[col];const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,col);g.addColorStop(.35,col);g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);_glowCache[col]=c;return c;}
 function light(sx,sy,r,col,a){const sp=glowSprite(col);const pa=ctx.globalAlpha;ctx.globalAlpha=a;ctx.drawImage(sp,sx-r,sy-r,r*2,r*2);ctx.globalAlpha=pa;}
+// FASE 6: sombra suave cacheada (volumen/profundidad) + color de ojos por enemigo
+const _shadSprite=(function(){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(0,0,0,0.55)');g.addColorStop(.6,'rgba(0,0,0,0.32)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return c;})();
+function softShadow(sx,sy,rx,ry,a){const pa=ctx.globalAlpha;ctx.globalAlpha=(a==null?1:a);ctx.drawImage(_shadSprite,sx-rx,sy-ry,rx*2,ry*2);ctx.globalAlpha=pa;}
+const EYE_COL={bat:'#ff3030',hellbat:'#ff5500',ghost:'#7accff',wraith:'#cc66ff',vampire:'#ff2244',liche:'#aa44ff',licheboss:'#cc44ff',banshee:'#eaffff',deathlord:'#ff33ff',demon:'#ffaa00',imp:'#ffcc00',golem:'#ff5500',sandgolem:'#ff8800',scorpion:'#ff3300',scorpion_sm:'#ff3300',pharaoh:'#3bd0ff',sandworm:'#ff6600',mummy:'#ff6600',zombie:'#ff2200',skeleton:'#ff3030',hellknight:'#ff4400',treeboss:'#ffe000',forestguardian:'#88ff44',forestking:'#aaff44',balrog:'#ff4400',archdemon:'#ffaa00',satan:'#ff3322',vine:'#ff2200',sand_spirit:'#ffd24a',vulture:'#ff4400'};
+function eyeColor(sk){return EYE_COL[sk]||'#ff3333';}
 const PROJ_LIGHT={fireball:'#ff7722',bomb:'#ff8800',lightning:'#88ccff',spear:'#ffe066',curse:'#cc66ff',book:'#ff88ff',drain:'#44ddcc',sword:'#aaddff',arrow:'#ffe080',dagger:'#cce0ff',whip:'#ffaa44',shield:'#66aaff',boss_shot:'#ff3366'};
 // Flora detallada: flores, cristales y huesos segun bioma.
 function drawFlora(fl,sx,sy,T){const s=fl.sz,bm=fl.bm,sway=Math.sin(T/650+fl.ph)*2;ctx.save();ctx.translate(sx,sy);
@@ -1255,9 +1265,13 @@ const FIRES={sword:fireSword,shieldBurst:fireShieldBurst,fireball:fireFireball,l
 function spawnPs(g,x,y,col,n=5,glow){if(!SETTINGS.particles)return;if(g.parts.length>560)return;for(let i=0;i<~~(n*.8);i++){const a=Math.random()*Math.PI*2,s=.8+Math.random()*4.2;g.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,size:3+~~(Math.random()*5),life:24+~~(Math.random()*24),maxLife:48,glow:!!glow});}}
 
 
-function drawE(e,cx,cy){const ex=e.x-cx,ey=e.y-cy;if(ex<-110||ex>GW+110||ey<-110||ey>GH+110)return;ctx.save();ctx.globalAlpha=.26;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(ex,ey+e.h/2-2,e.w*.62,e.w*.3,0,0,Math.PI*2);ctx.fill();ctx.restore();drawES(e,ex,ey,Math.sin(e.animFrame*.35)*1.8,e.hf);if(e.hp<e.maxHp){const bw=e.w+14,bx=ex-bw/2,by=ey-e.h/2-17;px(bx-1,by-1,bw+2,11,'#000');px(bx,by,bw,9,'#1a0000');px(bx,by,~~(bw*e.hp/e.maxHp),9,e.isBoss?'#ff44cc':'#dd2020');if(e.isBoss){pxa(bx,by,~~(bw*e.hp/e.maxHp),4,'#fff',.2);px(bx,by,~~(bw*e.hp/e.maxHp),2,'rgba(255,200,200,.35)');}else pxa(bx,by,~~(bw*e.hp/e.maxHp),2,'#fff',.15);}if(e.hf>0)e.hf--;}
+function drawE(e,cx,cy){const ex=e.x-cx,ey=e.y-cy;if(ex<-110||ex>GW+110||ey<-110||ey>GH+110)return;softShadow(ex,ey+e.h/2-2,e.w*.72,e.w*.34,.5);if(e.elite){const T=Date.now();ctx.save();ctx.globalAlpha=.5+Math.sin(T/200)*.2;ctx.strokeStyle='#ff66cc';ctx.lineWidth=2;ctx.beginPath();ctx.arc(ex,ey,e.w*.9+6,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;for(let k=0;k<3;k++){const a=T/300+k*2.1,rr=e.w*.9+6;px(~~(ex+Math.cos(a)*rr)-2,~~(ey+Math.sin(a)*rr)-2,4,4,'#ffaaff');}ctx.restore();if(SETTINGS.particles&&Math.random()<.16&&G&&G.parts.length<560)G.parts.push({x:e.x+(Math.random()-.5)*e.w,y:e.y+(Math.random()-.5)*e.h,vx:(Math.random()-.5),vy:-Math.random()*.8,col:'#ff77dd',size:2,life:18,maxLife:22,glow:true});}drawES(e,ex,ey,Math.sin(e.animFrame*.35)*1.8,e.hf);if(e.hp<e.maxHp){const bw=e.w+14,bx=ex-bw/2,by=ey-e.h/2-17;px(bx-1,by-1,bw+2,11,'#000');px(bx,by,bw,9,'#1a0000');px(bx,by,~~(bw*e.hp/e.maxHp),9,e.isBoss?'#ff44cc':'#dd2020');if(e.isBoss){pxa(bx,by,~~(bw*e.hp/e.maxHp),4,'#fff',.2);px(bx,by,~~(bw*e.hp/e.maxHp),2,'rgba(255,200,200,.35)');}else pxa(bx,by,~~(bw*e.hp/e.maxHp),2,'#fff',.15);}if(e.hf>0)e.hf--;}
 function drawPR(pr,cx,cy){const sx=pr.x-cx,sy=pr.y-cy;if(sx<-40||sx>GW+40||sy<-40||sy>GH+40)return;const s=pr.scale;if(['sword','arrow','spear','dagger'].includes(pr.type)){const sz=~~(6*s),ang=Math.atan2(pr.vy,pr.vx),len=pr.type==='spear'?sz*8:(pr.type==='dagger'?sz*4:sz*5);ctx.save();ctx.translate(sx,sy);ctx.rotate(ang);px(-len/2,-sz/2,len,sz,pr.col);ctx.restore();}else if(pr.type==='fireball'){const sz=~~(8*s);px(sx-sz,sy-sz,sz*2,sz*2,'#ff3300');px(sx-sz+3,sy-sz+3,sz*2-6,sz*2-6,'#ff8800');px(sx-sz+6,sy-sz+6,sz*2-12,sz*2-12,'#ffcc44');px(sx-3,sy-3,6,6,'#ffffff');}else if(pr.type==='lightning'||pr.type==='drain'){const sz=~~(4*s);px(sx-sz,sy-sz,sz*2,sz*2,pr.col);}else if(pr.type==='shield'||pr.type==='whip'){const sz=~~(6*s);px(sx-sz,sy-sz,sz*2,sz*2,'#3366ff');px(sx-sz+2,sy-sz+2,sz*2-4,sz*2-4,'#88aaff');}else if(pr.type==='curse'||pr.type==='book'){ctx.globalAlpha=.72+Math.sin(Date.now()/100)*.25;const sz=~~(5*s);px(sx-sz,sy-sz,sz*2,sz*2,'#cc44ff');px(sx-sz+2,sy-sz+2,sz*2-4,sz*2-4,'#ff88ff');ctx.globalAlpha=1;}else if(pr.type==='boss_shot'){const sz=~~(7*s);ctx.globalAlpha=.9;px(sx-sz,sy-sz,sz*2,sz*2,pr.col);px(sx-sz+3,sy-sz+3,sz*2-6,sz*2-6,pr.col==='#ff2200'?'#ffaa00':'#ff88cc');px(sx-2,sy-2,4,4,'#fff');ctx.globalAlpha=1;}}
-function drawPL(p,cx,cy){const sx=p.x-cx,sy=p.y-cy,bob=Math.sin(p.animFrame*.4)*2;ctx.save();ctx.globalAlpha=.3;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+p.h/2,p.w*.62,p.w*.3,0,0,Math.PI*2);ctx.fill();ctx.restore();drawSkinFx(p,sx,sy);if(p.auraDmg>0){ctx.save();ctx.globalAlpha=.12+Math.sin(Date.now()/200)*.05;ctx.fillStyle='#ffcc66';ctx.beginPath();ctx.arc(sx,sy-4,p.auraR,0,Math.PI*2);ctx.fill();ctx.restore();}if(p.stealthTimer>0){ctx.save();ctx.globalAlpha=.35+Math.sin(Date.now()/120)*.1;ctx.strokeStyle='#44ffaa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy-6,p.w+6,0,Math.PI*2);ctx.stroke();ctx.restore();}const inv=p.invincibleTimer>0&&~~(p.invincibleTimer/3)%2===0;if(inv)ctx.globalAlpha=.35;if(p.furyTimer>0){ctx.save();ctx.globalAlpha=.28+Math.sin(Date.now()/75)*.15;px(sx-18,sy-36,36,56,'#ff6600');ctx.globalAlpha=.15+Math.sin(Date.now()/55)*.1;px(sx-22,sy-40,44,64,'#ff2200');ctx.restore();ctx.globalAlpha=inv?.35:1;}if(p.shield>0&&!inv){ctx.save();ctx.globalAlpha=p.shield/p.maxShield*.18+Math.sin(Date.now()/200)*.04;px(sx-14,sy-30,28,44,'#44aaff');ctx.restore();}DRAW_FNS[p.charKey](p,sx,sy,bob,p.facing<0);ctx.globalAlpha=1;if(p.orbCount>0){for(let i=0;i<p.orbCount;i++){const a=Date.now()/640+i*(Math.PI*2/p.orbCount),ox=sx+Math.cos(a)*38,oy=sy+bob+Math.sin(a)*22;px(ox-5,oy-5,10,10,'#7722ee');px(ox-3,oy-3,6,6,'#cc88ff');}}}
+function drawPL(p,cx,cy){const sx=p.x-cx,sy=p.y-cy,bob=Math.sin(p.animFrame*.4)*2;softShadow(sx,sy+p.h/2,p.w*.74,p.w*.34,.55);drawSkinFx(p,sx,sy);if(p.auraDmg>0){ctx.save();ctx.globalAlpha=.12+Math.sin(Date.now()/200)*.05;ctx.fillStyle='#ffcc66';ctx.beginPath();ctx.arc(sx,sy-4,p.auraR,0,Math.PI*2);ctx.fill();ctx.restore();}if(p.stealthTimer>0){ctx.save();ctx.globalAlpha=.35+Math.sin(Date.now()/120)*.1;ctx.strokeStyle='#44ffaa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy-6,p.w+6,0,Math.PI*2);ctx.stroke();ctx.restore();}const inv=p.invincibleTimer>0&&~~(p.invincibleTimer/3)%2===0;if(inv)ctx.globalAlpha=.35;if(p.furyTimer>0){ctx.save();ctx.globalAlpha=.28+Math.sin(Date.now()/75)*.15;px(sx-18,sy-36,36,56,'#ff6600');ctx.globalAlpha=.15+Math.sin(Date.now()/55)*.1;px(sx-22,sy-40,44,64,'#ff2200');ctx.restore();ctx.globalAlpha=inv?.35:1;}if(p.shield>0&&!inv){ctx.save();ctx.globalAlpha=p.shield/p.maxShield*.18+Math.sin(Date.now()/200)*.04;px(sx-14,sy-30,28,44,'#44aaff');ctx.restore();}DRAW_FNS[p.charKey](p,sx,sy,bob,p.facing<0);ctx.globalAlpha=1;
+  // FASE 6: cabello/bandana animados (Leon y Snake)
+  const _hs=Date.now(),fc=p.facing<0?-1:1;
+  if(p.charKey==='leon'){const sw=Math.sin(_hs/160)*2+((p._vx||p._vy)?-fc*2:0);px(~~(sx-9*fc+sw*.4),~~(sy+bob-31),3,5,'#e8c870');px(~~(sx-5*fc+sw),~~(sy+bob-33),3,4,'#f0d488');px(~~(sx+1*fc+sw*.7),~~(sy+bob-32),2,4,'#d8b860');}
+  else if(p.charKey==='snake'){for(let i=0;i<5;i++){const wy=Math.sin(_hs/150+i*.6)*2.2;px(~~(sx-(9+i*3)*fc),~~(sy+bob-25+i*1.3+wy),3,3,i%2?'#7a8a5a':'#66764a');}}if(p.orbCount>0){for(let i=0;i<p.orbCount;i++){const a=Date.now()/640+i*(Math.PI*2/p.orbCount),ox=sx+Math.cos(a)*38,oy=sy+bob+Math.sin(a)*22;px(ox-5,oy-5,10,10,'#7722ee');px(ox-3,oy-3,6,6,'#cc88ff');}}}
 function drawCoin(c,cx,cy){const sx=c.x-cx,sy=c.y-cy;if(sx<-20||sx>GW+20||sy<-20||sy>GH+20)return;const b=Math.sin(Date.now()/220+c.x)*.6;circ(sx,sy+b,6,'#c8900a');circ(sx,sy+b,5,'#f0b800');circ(sx,sy+b,3,'#ffdc40');}
 function drawChest(ch,cx,cy){if(ch.open)return;const sx=ch.x-cx,sy=ch.y-cy;if(sx<-40||sx>GW+40||sy<-40||sy>GH+40)return;const cost=getChestCost(),afford=G&&G.coinCount>=cost,b=Math.sin(Date.now()/320)*1.5,ga=afford?(.3+Math.sin(Date.now()/260)*.22):.1;pxa(sx-18,sy-18+b,36,30,afford?'#d4a820':'#664422',ga);px(sx-11,sy-9+b,22,16,afford?'#7a3a10':'#3a2010');px(sx-11,sy-9+b,22,6,afford?'#b06018':'#604018');px(sx-8,sy-7+b,16,4,'#f0c030');px(sx-5,sy-12+b,10,6,'#f0c030');px(sx-4,sy-11+b,8,4,'#ccaa20');pxa(sx-4,sy-17+b,8,8,afford?'#ffcc44':'#886622',ga+.12);ctx.font='6px "Press Start 2P",monospace';ctx.fillStyle=afford?'#ffdd44':'#ff4444';ctx.textAlign='center';ctx.fillText('[E] 🪙'+cost,sx,sy+14+~~b);}
 function drawTrap(t,cx,cy){const sx=t.x-cx,sy=t.y-cy;const f=t.flashTimer>0;px(sx-8,sy-8,16,16,f?'#ffff44':'#886600');px(sx-6,sy-6,12,12,f?'#ffaa00':'#664400');px(sx-4,sy-4,8,8,f?'#ffee88':'#ffdd00');if(t.flashTimer>0)t.flashTimer--;}
@@ -1276,7 +1290,7 @@ function drawLights(g,CX,CY){
   // Proyectiles (luz por tipo)
   let pc=0;for(const pr of g.projs){if(pc>90)break;const lc=PROJ_LIGHT[pr.type];if(!lc)continue;const sx=pr.x-CX,sy=pr.y-CY;if(sx<-40||sx>GW+40||sy<-40||sy>GH+40)continue;light(sx,sy,16*(pr.scale||1)+9,lc,pr.crit?.6:.42);pc++;}
   // Enemigos: jefes y elites brillan
-  for(const e of g.enemies){const sx=e.x-CX,sy=e.y-CY;if(sx<-70||sx>GW+70||sy<-70||sy>GH+70)continue;if(e.isBoss)light(sx,sy,95,e.col,.26+Math.sin(T/240)*.06);else if(e.elite)light(sx,sy,46,'#ff66cc',.3+Math.sin(T/200)*.12);}
+  for(const e of g.enemies){const sx=e.x-CX,sy=e.y-CY;if(sx<-70||sx>GW+70||sy<-70||sy>GH+70)continue;if(e.isBoss)light(sx,sy,95,e.col,.26+Math.sin(T/240)*.06);else if(e.elite)light(sx,sy,46,'#ff66cc',.3+Math.sin(T/200)*.12);const ec=eyeColor(e.skin),er=e.isBoss?15:6.5;light(sx,sy-e.h*.45,er,ec,(e.isBoss?.6:.4)+Math.sin(T/180+e.x)*.08);}
   // Totems (aura magica)
   for(const t of g.totems){if(t.used)continue;const sx=t.x-CX,sy=t.y-CY;if(sx<-60||sx>GW+60||sy<-60||sy>GH+60)continue;light(sx,sy-10,42+Math.sin(T/300+t.bob)*7,'#b388ff',.32);}
   // Cofres (oro; legendario palpita mas)
@@ -1341,8 +1355,8 @@ function killE(g,idx){
    FASE 2 — OBJETOS (cientos), RAREZAS, SKINS, MISIONES, COFRES MEGABONK
    ============================================================ */
 const RARITIES=['common','rare','epic','legendary'];
-const RC2={common:'#b8b8c0',rare:'#3b9dff',epic:'#b455ff',legendary:'#ffb000'};
-const RL2={common:'COMUN',rare:'RARO',epic:'EPICO',legendary:'LEGENDARIO'};
+const RC2={common:'#b8b8c0',rare:'#3b9dff',epic:'#b455ff',legendary:'#ffb000',mythic:'#ff3df0'};
+const RL2={common:'COMUN',rare:'RARO',epic:'EPICO',legendary:'LEGENDARIO',mythic:'MÍTICO'};
 // Tirada de rareza con probabilidades equilibradas + ligera "suerte" segun cofres abiertos.
 function rollRarity(bonus){bonus=bonus||0;const luck=Math.min(.28,(chestsOpened||0)*0.012+bonus);
   const w={common:Math.max(.12,0.60-luck),rare:0.27+luck*0.4,epic:0.10+luck*0.4,legendary:0.03+luck*0.2};
@@ -1403,12 +1417,16 @@ const SKINS=[
  {id:'golden',name:'Dorado',rarity:'legendary',col:'#ffce3a',fx:'gold',bonus:p=>{p.dmgBonusMult+=.15;p.vampiric+=.05;},desc:'+15% daño +5% robo',mission:'fullclear'},
  {id:'void',name:'Vacío',rarity:'legendary',col:'#7b2fff',fx:'void',bonus:p=>{p.orbCount+=1;p.critChance+=.10;},desc:'+1 orbe +10% crítico',mission:'lvl50'},
  {id:'spectral',name:'Espectral',rarity:'legendary',col:'#33ffe0',fx:'spectral',bonus:p=>{p.resist=Math.min(.75,(p.resist||0)+.10);p.maxHp+=30;p.hp+=30;},desc:'+10% resist +30 vida',mission:'surv20'},
+ {id:'godfire',name:'Avatar de Fuego',rarity:'mythic',col:'#ff3b1a',fx:'mythic',bonus:p=>{p.dmgBonusMult+=.20;p.burn+=1;p.critChance+=.10;},desc:'+20% daño, incendio, +10% crítico',mission:'kills1000'},
+ {id:'cosmic',name:'Ser Cósmico',rarity:'mythic',col:'#b14dff',fx:'mythic',bonus:p=>{p.dmgBonusMult+=.15;p.orbCount+=1;p.vampiric+=.08;p.maxHp+=40;p.hp+=40;},desc:'+15% daño, +1 orbe, +8% robo, +40 vida',mission:'nohit8'},
 ];
 const SKIN_BY={};SKINS.forEach(s=>SKIN_BY[s.id]=s);
 function applySkin(p){const s=SKIN_BY[SAVE.equippedSkin]||SKIN_BY.default;p.skin=s.id;if(s.bonus){try{s.bonus(p);}catch(e){}}}
-function drawSkinFx(p,sx,sy){const s=SKIN_BY[p.skin];if(!s||s.fx==='none')return;const T=Date.now();
-  ctx.save();ctx.globalAlpha=.12+Math.sin(T/300)*.06;ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(sx,sy-4,p.w+11,0,Math.PI*2);ctx.fill();ctx.restore();
-  if(SETTINGS.particles&&G&&G.parts.length<560&&Math.random()<.45&&s.fx!=='glow'){G.parts.push({x:p.x+(Math.random()-.5)*22,y:p.y+8,vx:(Math.random()-.5)*.6,vy:-1-Math.random()*1.3,col:s.col,size:2+~~(Math.random()*3),life:18+~~(Math.random()*16),maxLife:34});}}
+function drawSkinFx(p,sx,sy){const s=SKIN_BY[p.skin];if(!s||s.fx==='none')return;const T=Date.now(),myth=s.fx==='mythic';
+  ctx.save();ctx.globalAlpha=(myth?.18:.12)+Math.sin(T/300)*.06;ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(sx,sy-4,p.w+(myth?16:11),0,Math.PI*2);ctx.fill();
+  if(myth){ctx.globalAlpha=.4+Math.sin(T/160)*.2;ctx.strokeStyle=s.col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy-4,p.w+18,0,Math.PI*2);ctx.stroke();for(let k=0;k<4;k++){const a=T/280+k*1.57,rr=p.w+18;px(~~(sx+Math.cos(a)*rr)-2,~~(sy-4+Math.sin(a)*rr)-2,4,4,'#ffffff');}}
+  ctx.restore();
+  if(SETTINGS.particles&&G&&G.parts.length<560&&(myth?Math.random()<.7:(Math.random()<.45&&s.fx!=='glow'))){G.parts.push({x:p.x+(Math.random()-.5)*22,y:p.y+8,vx:(Math.random()-.5)*.6,vy:-1-Math.random()*1.3,col:s.col,size:2+~~(Math.random()*3),life:18+~~(Math.random()*16),maxLife:34,glow:myth});}}
 function equipSkin(id){if(!SAVE.unlockedSkins.includes(id))return;SAVE.equippedSkin=id;saveProgress();renderSkinStrip();renderSkinGrid();}
 
 // ===== MISIONES (desafios extremos) =====
@@ -1419,9 +1437,9 @@ const MISSIONS=[
  {id:'chest15',ico:'📦',name:'Saqueador',diff:'★★★',desc:'Abre 15 cofres en una sola partida.',stat:'chests_run',target:15,reward:'Skin Sombra'},
  {id:'wave40',ico:'🌊',name:'Imparable',diff:'★★★',desc:'Llega a la oleada 40.',stat:'wave',target:40,reward:'Skin Infierno'},
  {id:'coins800',ico:'🪙',name:'Avaricia',diff:'★★★',desc:'Reúne 800 monedas en una partida.',stat:'coins_run',target:800,reward:'Gloria eterna'},
- {id:'kills1000',ico:'☠️',name:'Masacre',diff:'★★★★',desc:'Elimina 1000 enemigos en una sola partida.',stat:'kills_run',target:1000,reward:'Título: Carnicero'},
+ {id:'kills1000',ico:'☠️',name:'Masacre',diff:'★★★★',desc:'Elimina 1000 enemigos en una sola partida.',stat:'kills_run',target:1000,reward:'Skin MÍTICA: Avatar de Fuego'},
  {id:'bosses12',ico:'👑',name:'Cazajefes',diff:'★★★★',desc:'Derrota 12 jefes finales (total).',stat:'bosses_life',target:12,reward:'Título: Matagigantes'},
- {id:'nohit8',ico:'🩸',name:'Intocable',diff:'★★★★★',desc:'Sobrevive 8 minutos SIN recibir daño.',stat:'nohit_time',target:480,reward:'Título: Fantasma'},
+ {id:'nohit8',ico:'🩸',name:'Intocable',diff:'★★★★★',desc:'Sobrevive 8 minutos SIN recibir daño.',stat:'nohit_time',target:480,reward:'Skin MÍTICA: Ser Cósmico'},
  {id:'lvl50',ico:'🌌',name:'Trascender',diff:'★★★★★',desc:'Alcanza el nivel 50. Casi imposible.',stat:'level',target:50,reward:'Skin Vacío'},
  {id:'surv20',ico:'🕛',name:'Eternidad',diff:'★★★★★',desc:'Sobrevive 20 minutos sin morir.',stat:'time',target:1200,reward:'Skin Espectral'},
  {id:'fullclear',ico:'🏆',name:'Conquistador',diff:'★★★★★',desc:'Conquista los 4 biomas en una sola partida.',stat:'full_clear',target:1,reward:'Skin Dorado'},
