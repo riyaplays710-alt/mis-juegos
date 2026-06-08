@@ -331,6 +331,24 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .menu-btn::after{content:'';position:absolute;top:0;left:-60%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transform:skewX(-20deg);transition:left .5s;pointer-events:none;}
 .menu-btn:hover::after{left:130%;}
 #minimap-canvas{box-shadow:0 0 30px rgba(120,60,180,.4),inset 0 0 20px rgba(0,0,0,.6);border-image:linear-gradient(135deg,var(--gold),#7a3aff,var(--gold)) 1;}
+/* ===== FASE 7: tienda y logros ===== */
+.shop-row{display:flex;align-items:center;gap:12px;border:1px solid #2a1c38;background:rgba(14,8,22,.6);padding:9px 12px;}
+.shop-ico{font-size:22px;}
+.shop-body{flex:1;display:flex;flex-direction:column;gap:3px;}
+.shop-nm{font-size:8px;color:#fff;}
+.shop-lv{font-size:6px;color:#9a7;margin-left:4px;}
+.shop-desc{font-size:6px;color:#aa99bb;}
+.shop-buy{font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;border:2px solid var(--gold);background:rgba(40,28,8,.7);color:var(--gold);padding:7px 10px;white-space:nowrap;}
+.shop-buy:hover{background:var(--gold);color:#000;}
+.shop-buy.no{opacity:.4;border-color:#665;color:#776;cursor:not-allowed;}
+.shop-max{font-size:7px;color:var(--green);letter-spacing:1px;}
+.ach-card{display:flex;align-items:center;gap:12px;border:2px solid #2a1c38;background:rgba(14,8,22,.6);padding:9px 12px;opacity:.6;}
+.ach-card.done{opacity:1;border-color:var(--gold);background:rgba(30,22,6,.5);}
+.ach-ico{font-size:24px;}
+.ach-body{flex:1;display:flex;flex-direction:column;gap:3px;}
+.ach-nm{font-size:8px;color:#fff;}
+.ach-desc{font-size:6px;color:#aa99bb;line-height:1.6;}
+.ach-chk{font-size:18px;color:var(--gold);}
 </style>
 </head>
 
@@ -403,11 +421,15 @@ body.hud-hide-bot #bot-hud{display:none!important;}
       <div class="mc"><span>🏜</span>DESIERTO</div>
       <div class="mc"><span>⚰</span>CEMENT.</div>
       <div class="mc"><span>🔥</span>INFIERNO</div>
+      <div class="mc"><span>🌌</span>ABISMO</div>
     </div>
     <div class="menu-list">
       <button class="pxbtn menu-btn start-btn" id="btn-start">JUGAR</button>
       <button class="pxbtn menu-btn" id="btn-continue">CONTINUAR</button>
+      <button class="pxbtn menu-btn" id="btn-endless">SUPERVIVENCIA ∞</button>
+      <button class="pxbtn menu-btn" id="btn-shop">TIENDA 🪙</button>
       <button class="pxbtn menu-btn" id="btn-missions">MISIONES</button>
+      <button class="pxbtn menu-btn" id="btn-achievements">LOGROS</button>
       <button class="pxbtn menu-btn" id="btn-skins">SKINS</button>
       <button class="pxbtn menu-btn" id="btn-tomes">TOMOS Y ARMAS</button>
       <button class="pxbtn menu-btn" id="btn-options">OPCIONES</button>
@@ -444,6 +466,23 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div class="tome-grid" id="tome-grid"></div>
     <div id="wpx-list" style="display:none;"></div>
     <div class="ovl-foot"><button class="pxbtn" id="tome-close">CERRAR</button></div>
+  </div>
+</div>
+<div id="shop-ov" class="ovl">
+  <div class="ovl-panel" style="min-width:460px;max-width:560px;">
+    <div class="ovl-title">TIENDA DE ORO</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:7px;color:#886688;letter-spacing:1px;">
+      <span>Mejoras PERMANENTES (se mantienen entre partidas)</span><span id="shop-gold" style="color:var(--gold);font-size:10px;">🪙 0</span></div>
+    <div class="list-scroll" id="shop-list"></div>
+    <div class="ovl-foot"><button class="pxbtn" id="shop-close">CERRAR</button></div>
+  </div>
+</div>
+<div id="ach-ov" class="ovl">
+  <div class="ovl-panel" style="min-width:440px;max-width:560px;">
+    <div class="ovl-title">LOGROS</div>
+    <div style="font-size:6px;color:#886688;text-align:center;letter-spacing:1px;" id="ach-summary">Completados 0/0</div>
+    <div class="list-scroll" id="ach-list"></div>
+    <div class="ovl-foot"><button class="pxbtn" id="ach-close">CERRAR</button></div>
   </div>
 </div>
 <div id="screen-select" class="screen">
@@ -580,6 +619,8 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div class="opt-row"><span class="opt-lbl">Velocidad de juego</span><div class="opt-ctrl"><button class="stepbtn" data-opt="speed" data-dir="-1">‹</button><span class="opt-val" id="optv-speed">NORMAL</span><button class="stepbtn" data-opt="speed" data-dir="1">›</button></div></div>
     <div class="opt-sec">EFECTOS</div>
     <div class="opt-row"><span class="opt-lbl">Sonido (SFX)</span><div class="opt-ctrl"><button class="tgl" data-tgl="sfx">ON</button></div></div>
+    <div class="opt-row"><span class="opt-lbl">Música</span><div class="opt-ctrl"><button class="tgl" data-tgl="music">ON</button></div></div>
+    <div class="opt-row"><span class="opt-lbl">Volumen música</span><div class="opt-ctrl"><button class="stepbtn" data-opt="musicVol" data-dir="-1">−</button><span class="opt-val" id="optv-musicVol">50%</span><button class="stepbtn" data-opt="musicVol" data-dir="1">+</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Sacudida / flash de pantalla</span><div class="opt-ctrl"><button class="tgl" data-tgl="screenFx">ON</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Partículas</span><div class="opt-ctrl"><button class="tgl" data-tgl="particles">ON</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Iluminación dinámica</span><div class="opt-ctrl"><button class="tgl" data-tgl="lighting">ON</button></div></div>
@@ -624,12 +665,13 @@ let GAME_SPEED=CONFIG.GAME_SPEED; // 0.42 = ~44% mas lento que antes; movimiento
    SAVE guarda el progreso (biomas desbloqueados, heroe, records).
    ============================================================ */
 const SPEED_OPTS=[{k:'muy_lento',lbl:'MUY LENTO',v:0.30},{k:'lento',lbl:'LENTO',v:0.36},{k:'normal',lbl:'NORMAL',v:0.42},{k:'rapido',lbl:'RAPIDO',v:0.52},{k:'muy_rapido',lbl:'MUY RAPIDO',v:0.62}];
-const DEFAULT_SETTINGS={speed:'normal',sfx:true,screenFx:true,particles:true,dmgNumbers:true,showFps:false,hudScale:1.0,hudTop:true,hudBottom:true,lighting:true,weather:true};
+const DEFAULT_SETTINGS={speed:'normal',sfx:true,music:true,musicVol:0.5,screenFx:true,particles:true,dmgNumbers:true,showFps:false,hudScale:1.0,hudTop:true,hudBottom:true,lighting:true,weather:true};
 const SK_SET='bloodrite_settings_v1',SK_SAVE='bloodrite_save_v1';
 let SETTINGS={...DEFAULT_SETTINGS};
 let SAVE={unlockedMaps:[0],lastChar:null,bestLevel:0,totalKills:0,totalCoins:0,runs:0,bestMap:0,
   unlockedSkins:['default'],equippedSkin:'default',missions:{},bestTime:0,lifeBosses:0,bestWave:0,
-  equippedTomes:['t_power','t_swift']};
+  equippedTomes:['t_power','t_swift'],
+  gold:0,shopLevels:{},achievements:{},bestEndlessWave:0,bestEndlessTime:0,abyssCleared:false,endlessUnlocked:false};
 
 function loadSettings(){try{const raw=localStorage.getItem(SK_SET);if(raw)SETTINGS={...DEFAULT_SETTINGS,...JSON.parse(raw)};}catch(e){SETTINGS={...DEFAULT_SETTINGS};}}
 function saveSettings(){try{localStorage.setItem(SK_SET,JSON.stringify(SETTINGS));}catch(e){}}
@@ -698,10 +740,21 @@ const MAPS=[
    boss2:{name:'ARCH-DEMONIO',col:'#6a0808',w:50,h:60,hp:7000,spd:1.05,dmg:64,xp:1400,skin:'archdemon'},
    finalBoss:{name:'SATAN',col:'#0a0000',w:80,h:90,hp:15000,spd:1.05,dmg:82,xp:5000,skin:'satan'},
    enemies:['demon','hellbat','lavagolem','imp','hellknight']},
+  {id:'abyss',name:'EL ABISMO',emoji:'🌌',idx:4,diffMult:6.5,
+   tiles:['#0a0820','#0c0a26','#080618','#100a2c','#06041a','#0e0a24'],
+   bgGrad:['#020108','#06031a'],dC:'#241048',dC2:'#180a36',wC:'#2a1080',
+   bossTime:170,boss2Time:400,portalTime:580,
+   boss1:{name:'HERALDO DEL VACIO',col:'#3a1a6a',w:60,h:70,hp:13000,spd:1.05,dmg:80,xp:3000,skin:'archdemon'},
+   boss2:{name:'TITAN ESTELAR',col:'#2a2a7a',w:64,h:76,hp:19000,spd:1.05,dmg:92,xp:4200,skin:'deathlord'},
+   finalBoss:{name:'DEVORADOR DE MUNDOS',col:'#1a0840',w:90,h:104,hp:34000,spd:1.05,dmg:110,xp:8000,skin:'satan'},
+   secretBoss:{name:'EL VACIO ABSOLUTO',col:'#000010',w:110,h:124,hp:70000,spd:1.1,dmg:140,xp:20000,skin:'satan'},
+   enemies:['voidling','starcaller','voidknight','abomination','shade']},
 ];
 let unlockedMaps=[0];
 
 function getBiome(wx,wy){if(wx<WHH&&wy<WHH)return 0;if(wx>=WHH&&wy<WHH)return 1;if(wx<WHH&&wy>=WHH)return 2;return 3;}
+// Indice de tema visual: el Abismo (5o mundo) usa su propia identidad cosmica.
+function fxIdx(cx,cy){return (typeof G!=='undefined'&&G&&G.mapDef&&G.mapDef.id==='abyss')?4:getBiome(cx,cy);}
 function biomeWeights(wx,wy){
   const R=650,dx=wx-WHH,dy=wy-WHH;
   const w=[Math.max(0,(-dx+R)/R)*Math.max(0,(-dy+R)/R),Math.max(0,(dx+R)/R)*Math.max(0,(-dy+R)/R),Math.max(0,(-dx+R)/R)*Math.max(0,(dy+R)/R),Math.max(0,(dx+R)/R)*Math.max(0,(dy+R)/R)];
@@ -730,6 +783,7 @@ const BIOME_FX=[
   {light:'#ffe9a0',amb:'rgba(150,110,30,0.16)',vig:'rgba(20,12,2,0.44)',weather:'sand',wcol:'#d8c074',mote:'#ffe9a0',torch:'#ffbb44',grass:['#8a7838','#9a8642','#b09a4a']},
   {light:'#c79bff',amb:'rgba(70,30,110,0.20)',vig:'rgba(6,2,16,0.56)',weather:'fog',wcol:'#6a5a8a',mote:'#c79bff',torch:'#9b6bff',grass:['#3a2c52','#4a3a62','#322444']},
   {light:'#ff7a55',amb:'rgba(150,20,10,0.22)',vig:'rgba(14,1,1,0.52)',weather:'ember',wcol:'#ff5522',mote:'#ff9955',torch:'#ff6622',grass:['#5a1a10','#6a221a','#7a2a1a']},
+  {light:'#9b6bff',amb:'rgba(46,12,96,0.30)',vig:'rgba(2,0,12,0.64)',weather:'star',wcol:'#c4a8ff',mote:'#c0a0ff',torch:'#9b6bff',grass:['#241048','#2e1858','#1a0a36']},
 ];
 // Sprites de glow cacheados (luz aditiva eficiente para 60 FPS).
 const _glowCache={};
@@ -771,7 +825,7 @@ function drawDecoTile(bm,t,sx,sy){
 }
 
 function drawMap(camX,camY){
-  const CW=GW,CH=GH,bm=getBiome(camX+CW/2,camY+CH/2),md=MAPS[bm];
+  const CW=GW,CH=GH,bm=fxIdx(camX+CW/2,camY+CH/2),md=MAPS[bm];
   const g=ctx.createLinearGradient(0,0,0,CH);g.addColorStop(0,md.bgGrad[0]);g.addColorStop(1,md.bgGrad[1]);ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
   const TS=32,x0=~~(camX/TS)*TS,y0=~~(camY/TS)*TS;
   for(let wx=x0;wx<camX+CW+TS;wx+=TS)for(let wy=y0;wy<camY+CH+TS;wy+=TS){ctx.fillStyle=blendFloor(wx+16,wy+16);ctx.fillRect(~~(wx-camX),~~(wy-camY),TS+1,TS+1);}
@@ -813,6 +867,8 @@ const ET={
   mummy:{col:'#c8b880',w:14,h:22,hp:70,spd:.85,dmg:28,xp:25,skin:'mummy'},scorpion_sm:{col:'#8a5820',w:18,h:12,hp:44,spd:1.2,dmg:22,xp:18,skin:'scorpion_sm'},sand_spirit:{col:'#e0c880',w:16,h:20,hp:38,spd:1.4,dmg:20,xp:15,skin:'sand_spirit'},vulture:{col:'#4a3a28',w:20,h:14,hp:28,spd:1.7,dmg:16,xp:12,skin:'vulture'},sandgolem:{col:'#8a6a30',w:28,h:32,hp:220,spd:.45,dmg:48,xp:50,skin:'sandgolem'},
   ghost:{col:'#aaaaff',w:18,h:20,hp:40,spd:1.5,dmg:20,xp:18,skin:'ghost'},wraith:{col:'#6622aa',w:16,h:24,hp:88,spd:1.0,dmg:32,xp:30,skin:'wraith'},vampire:{col:'#440a55',w:14,h:22,hp:105,spd:.95,dmg:36,xp:35,skin:'vampire'},liche:{col:'#2a0844',w:14,h:22,hp:145,spd:.85,dmg:44,xp:45,skin:'liche'},
   demon:{col:'#cc2200',w:16,h:20,hp:80,spd:1.0,dmg:36,xp:30,skin:'demon'},hellbat:{col:'#880000',w:20,h:14,hp:32,spd:2.2,dmg:20,xp:15,skin:'hellbat'},lavagolem:{col:'#5a1a08',w:32,h:36,hp:340,spd:.45,dmg:60,xp:70,skin:'golem'},imp:{col:'#aa3300',w:12,h:16,hp:40,spd:1.5,dmg:24,xp:18,skin:'imp'},hellknight:{col:'#6a0808',w:18,h:24,hp:165,spd:.85,dmg:52,xp:50,skin:'hellknight'},
+  // 5o MUNDO — EL ABISMO (enemigos del vacio, reusan sprites con stats propios)
+  voidling:{col:'#6a2aff',w:16,h:22,hp:160,spd:1.2,dmg:44,xp:60,skin:'wraith'},starcaller:{col:'#33ccff',w:18,h:20,hp:120,spd:1.6,dmg:38,xp:55,skin:'ghost'},voidknight:{col:'#3a2a6a',w:20,h:26,hp:300,spd:.9,dmg:64,xp:90,skin:'hellknight'},abomination:{col:'#2a0a4a',w:34,h:38,hp:620,spd:.5,dmg:88,xp:140,skin:'golem'},shade:{col:'#8822cc',w:14,h:22,hp:200,spd:1.05,dmg:52,xp:70,skin:'vampire'},
 };
 
 function drawES(e,sx,sy,bob,hf){
@@ -1149,7 +1205,7 @@ function drawTotem(t,cx,cy){
   }
 }
 
-function initGame(ck,mapIdx,carryPlayer,veteran){
+function initGame(ck,mapIdx,carryPlayer,veteran,endless){
   const md=MAPS[mapIdx];
   const pPos=portalPos(mapIdx);
   const portal={x:pPos.x,y:pPos.y,visible:false,activated:false};
@@ -1158,7 +1214,7 @@ function initGame(ck,mapIdx,carryPlayer,veteran){
     const p=persistentPlayer;
     p.x=WS/2+(Math.random()-.5)*150;p.y=WHS/2+(Math.random()-.5)*150;p.invincibleTimer=200;
     p.hp=Math.min(p.maxHp,Math.max(p.maxHp*.4,p.hp));p.shield=Math.min(p.maxShield,p.shield+p.maxShield*.4);p.mana=p.maxMana;
-  }else{persistentPlayer=makePlayer(ck);applySkin(persistentPlayer);applyTomesStats(persistentPlayer);
+  }else{persistentPlayer=makePlayer(ck);applySkin(persistentPlayer);applyTomesStats(persistentPlayer);applyShop(persistentPlayer);
     // CONTINUAR: bonus de veterano para empezar en un bioma avanzado de forma jugable.
     if(veteran&&mapIdx>0){const p=persistentPlayer,boost=1+mapIdx*0.55;p.maxHp=~~(p.maxHp*boost);p.hp=p.maxHp;p.maxShield=~~(p.maxShield*boost);p.shield=p.maxShield;p.baseDmg*=boost;p.level=1+mapIdx*3;p.xpNext=~~(80*Math.pow(1.40,mapIdx*3));}
   }
@@ -1167,6 +1223,9 @@ function initGame(ck,mapIdx,carryPlayer,veteran){
   renderWS();document.getElementById('char-ind').textContent=CHARS[ck].emoji+' '+CHARS[ck].name.toUpperCase();document.getElementById('map-hud').textContent=md.emoji+' '+md.name;updateIntroMapPreview();
   G.tagBonus=computeTagBonus();
   G.weather=makeWeather();G.lightT=0;G.lightFlash=0; // FASE 5: clima por bioma
+  G.endless=!!endless;G.secretSpawned=false;G.endBossTimer=0;G.endBossIdx=0; // FASE 7: modo infinito + jefe secreto
+  if(G.endless){G.mapDef={...md,name:'SUPERVIVENCIA ∞',emoji:'♾️'};document.getElementById('map-hud').textContent='♾️ INFINITO';}
+  musicStart(); // FASE 7: musica de fondo
 }
 
 function updateIntroMapPreview(){const ul=(typeof SAVE!=='undefined'&&SAVE.unlockedMaps)?SAVE.unlockedMaps:[0];document.querySelectorAll('#menu-maps .mc').forEach((el,i)=>{el.className='mc'+(ul.includes(i)?(i===Math.max(...ul)?' active':' unlocked'):' locked');});}
@@ -1301,7 +1360,7 @@ function drawLights(g,CX,CY){
 }
 // ===== FASE 5: CLIMA / AMBIENTE por bioma =====
 function makeWeather(){const a=[];for(let i=0;i<150;i++)a.push({x:Math.random()*GW,y:Math.random()*GH,v:.3+Math.random(),sz:1+Math.random()*2,ph:Math.random()*6.28});return a;}
-function updateWeather(g,dt){if(!SETTINGS.weather){g.lightFlash=0;return;}const bm=getBiome(g.cam.x+GW/2,g.cam.y+GH/2),k=BIOME_FX[bm].weather,now=performance.now();
+function updateWeather(g,dt){if(!SETTINGS.weather){g.lightFlash=0;return;}const bm=fxIdx(g.cam.x+GW/2,g.cam.y+GH/2),k=BIOME_FX[bm].weather,now=performance.now();
   for(const w of g.weather){
     if(k==='leaf'){w.x+=Math.sin(w.ph+now/700)*.6+.4;w.y+=w.v*.7;w.ph+=.02;}
     else if(k==='sand'){w.x+=w.v*4+2;w.y+=Math.sin(w.ph)*.3;w.ph+=.05;}
@@ -1313,7 +1372,7 @@ function updateWeather(g,dt){if(!SETTINGS.weather){g.lightFlash=0;return;}const 
   if(g.lightT<=0){g.lightT=7+Math.random()*11;if((bm===2||bm===3)&&Math.random()<.55)g.lightFlash=1;}
   if(g.lightFlash>0)g.lightFlash-=dt*3.2;
 }
-function drawWeather(g){if(!SETTINGS.weather)return;const bm=getBiome(g.cam.x+GW/2,g.cam.y+GH/2),fx=BIOME_FX[bm],k=fx.weather,T=Date.now();
+function drawWeather(g){if(!SETTINGS.weather)return;const bm=fxIdx(g.cam.x+GW/2,g.cam.y+GH/2),fx=BIOME_FX[bm],k=fx.weather,T=Date.now();
   if(k==='fog'){ctx.save();ctx.globalAlpha=.10;ctx.fillStyle=fx.wcol;for(let i=0;i<6;i++){const fxp=((T/40*(0.4+i*0.1))% (GW+400))-200,fy=(i*GH/6+Math.sin(T/2000+i)*40);ctx.beginPath();ctx.ellipse(fxp,fy,260,90,0,0,6.28);ctx.fill();}ctx.globalAlpha=1;ctx.restore();}
   else{ctx.save();for(const w of g.weather){ctx.globalAlpha=k==='ember'?.6:.42;ctx.fillStyle=fx.wcol;if(k==='sand')ctx.fillRect(~~w.x,~~w.y,~~(w.sz*3)+2,1);else ctx.fillRect(~~w.x,~~w.y,~~w.sz+1,~~w.sz+1);}ctx.globalAlpha=1;ctx.restore();}
   if(g.lightFlash>0){ctx.save();ctx.globalAlpha=Math.min(.45,g.lightFlash*.45);ctx.fillStyle=bm===3?'#ff6633':'#bcd4ff';ctx.fillRect(0,0,GW,GH);ctx.restore();}
@@ -1327,7 +1386,7 @@ function drawFrame(){
   if(G.overTime)pxa(0,0,GW,GH,'#cc0000',Math.min(.28,G.overTimeMult*.06)*(.5+Math.sin(Date.now()/500)*.5));
   const _hpf=G.player.hp/Math.max(1,G.player.maxHp);if(_hpf<.30){const a=(.30-_hpf)/.30,rg=ctx.createRadialGradient(GW/2,GH/2,GW*.30,GW/2,GH/2,GW*.62);rg.addColorStop(0,'transparent');rg.addColorStop(1,'rgba(170,0,0,'+(a*(.4+Math.sin(Date.now()/240)*.3)).toFixed(3)+')');ctx.fillStyle=rg;ctx.fillRect(0,0,GW,GH);} // FASE 4: vineta de vida baja
   const lg=ctx.createRadialGradient(GW/2,GH/2,10,GW/2,GH/2,190);lg.addColorStop(0,'rgba(255,240,205,.10)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.fillRect(0,0,GW,GH); // luz ambiental suave alrededor del jugador
-  const _bm=getBiome(CX+GW/2,CY+GH/2),_fx=BIOME_FX[_bm];ctx.fillStyle=_fx.amb;ctx.fillRect(0,0,GW,GH); // FASE 5: tinte ambiental del bioma
+  const _bm=fxIdx(CX+GW/2,CY+GH/2),_fx=BIOME_FX[_bm];ctx.fillStyle=_fx.amb;ctx.fillRect(0,0,GW,GH); // FASE 5: tinte ambiental del bioma
   const vg=ctx.createRadialGradient(GW/2,GH/2,GW*.07,GW/2,GH/2,GW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,_fx.vig);ctx.fillStyle=vg;ctx.fillRect(0,0,GW,GH);ctx.restore(); // viñeta tintada por bioma
   drawWeather(G); // FASE 5: clima/ambiente encima
 }
@@ -1343,7 +1402,12 @@ function killE(g,idx){
   for(let k=0;k<3;k++)g.gems.push({x:e.x+(Math.random()-.5)*24,y:e.y+(Math.random()-.5)*24,val:~~(e.xp/3)});
   if(Math.random()<.46)g.coinItems.push({x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,val:Math.max(1,~~((1+Math.random()*3)*(1+curMapIdx*.35))),life:700}); // FASE 4: oro mas frecuente y escala por bioma
   spawnPs(g,e.x,e.y,e.col,12);spawnPs(g,e.x,e.y,'#ffddaa',4,true);g.kills++;g.runKills=(g.runKills||0)+1;
-  if(e.isBoss){if(e.isFinalBoss){g.bfKilled=true;SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;g.portal.visible=true;annPortal('BOSS FINAL DERROTADO!\nPresiona [E] en el PORTAL para avanzar.');}
+  if(e.isBoss){
+    if(e.isFinalBoss&&!g.endless){
+      if(g.mapDef.secretBoss&&!g.secretSpawned){g.secretSpawned=true;SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;annPortal('EL VACIO DESPIERTA...\n¡El jefe secreto aparece!');flashScreen('#aa44ff');setTimeout(()=>{if(G&&G.running)spawnBossE(G,G.mapDef.secretBoss,true);},2000);}
+      else{g.bfKilled=true;SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;g.portal.visible=true;annPortal('BOSS FINAL DERROTADO!\nPresiona [E] en el PORTAL para avanzar.');}
+    } else {SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;}
+    checkAchievements();
     document.getElementById('boss-bar-wrap').classList.remove('show');g.curBoss=null;flashScreen('#ffffff');
     for(let k=0;k<20;k++)g.gems.push({x:e.x+(Math.random()-.5)*140,y:e.y+(Math.random()-.5)*140,val:~~(e.xp/20)});
     for(let k=0;k<10;k++)g.coinItems.push({x:e.x+(Math.random()-.5)*90,y:e.y+(Math.random()-.5)*90,val:5+~~(Math.random()*10),life:800});
@@ -1516,12 +1580,15 @@ document.getElementById('chest-skip').onclick=confirmChest;
 
 
 function goNextMap(){
-  const ni=Math.min(3,curMapIdx+1);
-  if(ni>=MAPS.length){SAVE.runs++;SAVE.totalKills+=G.kills;SAVE.totalCoins+=G.coinCount;SAVE._fullClearFlag=true;checkMissions();autoSave();document.getElementById('go-title').textContent='VICTORIA!';document.getElementById('go-title').style.color='#f0c040';document.getElementById('go-stats').textContent='Has conquistado los 4 mundos!\n\nHEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nNIVEL: '+G.player.level+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount;document.getElementById('go-ov').classList.add('show');return;}
+  const ni=curMapIdx+1;
+  if(ni>=MAPS.length){ // tras EL ABISMO: victoria total
+    SAVE.runs++;SAVE.totalKills+=G.kills;SAVE.totalCoins+=G.coinCount;SAVE._fullClearFlag=true;SAVE.abyssCleared=true;SAVE.endlessUnlocked=true;
+    bankGold(G.coinCount);checkMissions();checkAchievements();autoSave();
+    document.getElementById('go-title').textContent='VICTORIA TOTAL!';document.getElementById('go-title').style.color='#c79bff';document.getElementById('go-stats').textContent='Has conquistado los 5 mundos y EL ABISMO!\n\nHEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nNIVEL: '+G.player.level+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\n\nDesbloqueado: SUPERVIVENCIA INFINITA';document.getElementById('go-ov').classList.add('show');return;}
   if(!unlockedMaps.includes(ni))unlockedMaps.push(ni);
-  if(!SAVE.unlockedMaps.includes(ni)){SAVE.unlockedMaps.push(ni);} autoSave();
+  if(!SAVE.unlockedMaps.includes(ni)){SAVE.unlockedMaps.push(ni);} bankGold(~~(G.coinCount*0.5));autoSave();
   G.running=false;persistentPlayer._weapons=G.weapons;
-  document.getElementById('mt-title').textContent='NIVEL COMPLETADO';document.getElementById('mt-map').textContent=MAPS[ni].emoji+' '+MAPS[ni].name;document.getElementById('mt-sub').textContent='Dificultad x'+MAPS[ni].diffMult+' — Tu progreso se mantiene!';document.getElementById('map-trans').classList.add('show');
+  document.getElementById('mt-title').textContent=ni>=4?'¡EL ABISMO TE LLAMA!':'NIVEL COMPLETADO';document.getElementById('mt-map').textContent=MAPS[ni].emoji+' '+MAPS[ni].name;document.getElementById('mt-sub').textContent='Dificultad x'+MAPS[ni].diffMult+' — Tu progreso se mantiene!';document.getElementById('map-trans').classList.add('show');
   setTimeout(()=>{document.getElementById('map-trans').classList.remove('show');curMapIdx=ni;chestsOpened=~~(chestsOpened*.7);initGame(G.player.charKey,curMapIdx,true);G.running=true;lastTime=performance.now();startLoop();},3800);
 }
 
@@ -1544,7 +1611,7 @@ function update(ts){
   if(p.stealthTimer>0){p.stealthTimer--;if(p.stealthTimer<=0)annWave('Sigilo terminado');}
   p.regenTimer=(p.regenTimer||0)+dt;if(p.regen>0&&p.regenTimer>=1){p.hp=Math.min(p.maxHp,p.hp+p.regen);p.regenTimer=0;}
   if(p.shieldRegen>0&&p.maxShield>0){p.shieldRegenTimer=(p.shieldRegenTimer||0)+dt;if(p.shieldRegenTimer>=1){p.shield=Math.min(p.maxShield,p.shield+p.shieldRegen);p.shieldRegenTimer=0;}}
-  G.misTimer=(G.misTimer||0)+dt;if(G.misTimer>=1){G.misTimer=0;checkMissions();}
+  G.misTimer=(G.misTimer||0)+dt;if(G.misTimer>=1){G.misTimer=0;checkMissions();checkAchievements();}
   if(p.maxMana>0){p.manaTimer+=dt;if(p.manaTimer>=1){p.mana=Math.min(p.maxMana,p.mana+p.manaRegen);p.manaTimer=0;}}
   G.cam.x+=((p.x-GW/2)-G.cam.x)*Math.min(1,dt*9);G.cam.y+=((p.y-GH/2)-G.cam.y)*Math.min(1,dt*9); // FASE 5: cámara suave (lerp)
   updateWeather(G,dt);
@@ -1567,14 +1634,19 @@ function update(ts){
   else if(nearTotem&&!totemPending)showEPr('Canalizando totem... '+~~(Math.min(10,nearTotem.prog||0)*10)+'%');
   else hideEPr();
 
-  // Portal appear at 10 min
-  if(!G.portal.visible&&G.time>=md.portalTime&&G.b1Spawned&&!G.curBoss){G.portal.visible=true;annPortal('🌀 PORTAL ABIERTO a los 10 min!\nAcercate y presiona [E] para activarlo.');}
-  // Overtime
-  if(G.portal.visible&&!G.portal.activated&&!G.overTime&&G.time>=md.portalTime+120){G.overTime=true;G.overTimeTimer=0;document.getElementById('danger-flash').classList.add('show');annWave('PELIGRO! Dificultad sube cada 30s!');}
-  if(G.overTime){G.overTimeTimer+=dt;if(G.overTimeTimer>=CONFIG.OVERTIME_STEP){G.overTimeTimer=0;G.overTimeMult+=.5;annWave('DIFICULTAD x'+G.overTimeMult.toFixed(1)+'!');}}
-  // Bosses
-  if(!G.b1Spawned&&G.time>=md.bossTime){G.b1Spawned=true;spawnBossE(G,md.boss1,false);}
-  if(!G.b2Spawned&&G.time>=md.boss2Time&&!G.curBoss){G.b2Spawned=true;spawnBossE(G,md.boss2,false);}
+  // Portal appear at 10 min (solo modo normal)
+  if(!G.endless){
+    if(!G.portal.visible&&G.time>=md.portalTime&&G.b1Spawned&&!G.curBoss){G.portal.visible=true;annPortal('🌀 PORTAL ABIERTO a los 10 min!\nAcercate y presiona [E] para activarlo.');}
+    if(G.portal.visible&&!G.portal.activated&&!G.overTime&&G.time>=md.portalTime+120){G.overTime=true;G.overTimeTimer=0;document.getElementById('danger-flash').classList.add('show');annWave('PELIGRO! Dificultad sube cada 30s!');}
+    if(G.overTime){G.overTimeTimer+=dt;if(G.overTimeTimer>=CONFIG.OVERTIME_STEP){G.overTimeTimer=0;G.overTimeMult+=.5;annWave('DIFICULTAD x'+G.overTimeMult.toFixed(1)+'!');}}
+    if(!G.b1Spawned&&G.time>=md.bossTime){G.b1Spawned=true;spawnBossE(G,md.boss1,false);}
+    if(!G.b2Spawned&&G.time>=md.boss2Time&&!G.curBoss){G.b2Spawned=true;spawnBossE(G,md.boss2,false);}
+  } else {
+    // INFINITO: escalado continuo + jefes ciclicos cada vez mas fuertes
+    G.overTimeTimer+=dt;if(G.overTimeTimer>=30){G.overTimeTimer=0;G.overTimeMult+=.18;}G.overTime=G.overTimeMult>1.05;
+    G.endBossTimer+=dt;
+    if(G.endBossTimer>=70&&!G.curBoss&&ENDLESS_BOSSES.length){G.endBossTimer=0;const eb=ENDLESS_BOSSES[G.endBossIdx%ENDLESS_BOSSES.length];G.endBossIdx++;spawnBossE(G,{...eb,name:eb.name+' +'+G.endBossIdx,hp:~~(eb.hp*(1+G.endBossIdx*0.45))},false);}
+  }
   // Mini-jefes: presion extra periodica sin reemplazar a los jefes principales (dificultad progresiva)
   G.miniTimer=(G.miniTimer||0)+dt;
   if(G.miniTimer>=CONFIG.MINIBOSS_EVERY&&!G.curBoss&&G.time>40){G.miniTimer=0;spawnMiniBoss(G);}
@@ -1679,7 +1751,7 @@ function updateHUD(){
 function renderWS(){const c=document.getElementById('weapon-slots');c.innerHTML='';G.weapons.forEach(w=>{const d=document.createElement('div');d.className='ws active';d.innerHTML=w.emoji+'<span class="ws-lbl">'+w.name+'</span><div class="cdov"></div>';c.appendChild(d);});}
 
 function levelUp(){
-  const p=G.player;p.level++;p.xp-=p.xpNext;p.xpNext=~~(p.xpNext*1.34);checkMissions();// FASE 4: curva XP mas suave (1.34)
+  const p=G.player;p.level++;p.xp-=p.xpNext;p.xpNext=~~(p.xpNext*1.34);checkMissions();sfxLevelUp();// FASE 4: curva XP mas suave (1.34)
   p.hp=Math.min(p.maxHp,p.hp+~~(p.maxHp*.06)+4);p.shield=Math.min(p.maxShield,p.shield+~~(p.maxShield*.06));G.paused=true; // cura por % de vida
   const lw=p.level<4?[4,2,.4]:[3,2,1.1];const wm={common:lw[0],rare:lw[1],epic:lw[2],legendary:p.level<5?0:0.6};const weighted=[];for(const u of UPGRADES){const w=wm[u.rarity]||1;for(let i=0;i<~~(w*8);i++)weighted.push(u);}
   const picks=[],seen=new Set();while(picks.length<3&&weighted.length){const u=weighted[~~(Math.random()*weighted.length)];if(!seen.has(u.id)){seen.add(u.id);picks.push(u);}}
@@ -1687,21 +1759,24 @@ function levelUp(){
 }
 
 function gameOver(){
-  if(!G||!G.running)return;G.running=false;document.getElementById('danger-flash').classList.remove('show');
-  SAVE.runs++;SAVE.totalKills+=G.kills;SAVE.totalCoins+=G.coinCount;SAVE.bestTime=Math.max(SAVE.bestTime||0,~~G.time);SAVE.bestWave=Math.max(SAVE.bestWave||0,G.waveNum);checkMissions();autoSave();
+  if(!G||!G.running)return;G.running=false;document.getElementById('danger-flash').classList.remove('show');musicStop();
+  SAVE.runs++;SAVE.totalKills+=G.kills;SAVE.totalCoins+=G.coinCount;SAVE.bestTime=Math.max(SAVE.bestTime||0,~~G.time);SAVE.bestWave=Math.max(SAVE.bestWave||0,G.waveNum);
+  if(G.endless){SAVE.bestEndlessWave=Math.max(SAVE.bestEndlessWave||0,G.waveNum);SAVE.bestEndlessTime=Math.max(SAVE.bestEndlessTime||0,~~G.time);}
+  bankGold(G.coinCount);checkMissions();checkAchievements();autoSave();
   const t=~~G.time,dm=playerDmgMult(G.player);
   document.getElementById('go-stats').textContent='HEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nMAPA: '+G.mapDef.emoji+' '+G.mapDef.name+'\nNIVEL: '+G.player.level+'\nDANO: '+(G.player.baseDmg*G.player.dmgBonusMult).toFixed(1)+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\nTIEMPO: '+String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')+'\nOLA: '+G.waveNum+(G.overTime?'\nOVERTIME: x'+G.overTimeMult.toFixed(1):'');
   document.getElementById('go-ov').classList.add('show');document.getElementById('boss-bar-wrap').classList.remove('show');
 }
 
 function fullReset(){
+  musicStop();
   persistentPlayer=null;unlockedMaps=[0];curMapIdx=0;chestsOpened=0;chestPending=null;totemPending=null;
-  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov','tome-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
+  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov','tome-ov','shop-ov','ach-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
   document.getElementById('boss-bar-wrap').classList.remove('show');hideEPr();updateIntroMapPreview();
 }
 
-document.getElementById('btn-start').onclick=()=>{renderSkinStrip();showScreen('screen-select');};
-document.querySelectorAll('.char-card').forEach(c=>{c.onclick=()=>{selChar=c.dataset.char;persistentPlayer=null;curMapIdx=0;chestsOpened=0;SAVE.lastChar=selChar;saveProgress();showScreen('screen-game');initGame(selChar,0,false);lastTime=performance.now();startLoop();};});
+document.getElementById('btn-start').onclick=()=>{pendingMode='normal';renderSkinStrip();showScreen('screen-select');};
+document.querySelectorAll('.char-card').forEach(c=>{c.onclick=()=>{selChar=c.dataset.char;persistentPlayer=null;curMapIdx=0;chestsOpened=0;SAVE.lastChar=selChar;saveProgress();showScreen('screen-game');initGame(selChar,0,false,false,pendingMode==='endless');lastTime=performance.now();startLoop();};});
 document.getElementById('gorestart-btn').onclick=()=>{document.getElementById('go-ov').classList.remove('show');document.getElementById('go-title').textContent='CAISTE';document.getElementById('go-title').style.color='var(--blood)';fullReset();showScreen('screen-select');};
 document.getElementById('gomenu-btn').onclick=()=>{document.getElementById('go-ov').classList.remove('show');document.getElementById('go-title').textContent='CAISTE';document.getElementById('go-title').style.color='var(--blood)';fullReset();updateContinueBtn();updateIntroMapPreview();showScreen('screen-intro');};
 document.getElementById('pbtn-resume').onclick=()=>{if(!G)return;G.paused=false;document.getElementById('pause-ov').classList.remove('show');lastTime=performance.now();startLoop();};
@@ -1716,7 +1791,7 @@ window.addEventListener('keydown',e=>{
   if(e.key===' '&&G&&G.running&&!G.minimapOpen){G.paused=!G.paused;document.getElementById('pause-ov').classList.toggle('show',G.paused);if(!G.paused){lastTime=performance.now();startLoop();}}
   if((e.key==='e'||e.key==='E')&&G&&G.running&&!G.paused&&!G.minimapOpen){
     if(document.getElementById('chest-ov').classList.contains('show')){confirmChest();return;}
-    if(G.nearPortal&&!G.portal.activated&&!G.bfSpawned&&G.portal.visible){G.portal.activated=true;G.bfSpawned=true;G.overTime=false;G.overTimeMult=1.0;document.getElementById('danger-flash').classList.remove('show');spawnBossE(G,G.mapDef.finalBoss,true);annPortal('JEFE FINAL INVOCADO!');}
+    if(G.nearPortal&&!G.portal.activated&&!G.bfSpawned&&G.portal.visible){G.portal.activated=true;G.bfSpawned=true;G.overTime=false;G.overTimeMult=1.0;document.getElementById('danger-flash').classList.remove('show');spawnBossE(G,G.mapDef.finalBoss,true);sfxPortal();annPortal('JEFE FINAL INVOCADO!');}
     else if(G.nearPortal&&G.bfKilled)goNextMap();
     else if(G.nearChest&&!G.nearChest.open)openChest(G,G.nearChest);
   }
@@ -1732,12 +1807,14 @@ function renderOptions(){
   const so=SPEED_OPTS.find(s=>s.k===SETTINGS.speed)||SPEED_OPTS[2];
   document.getElementById('optv-speed').textContent=so.lbl;
   document.getElementById('optv-hudScale').textContent=Math.round(SETTINGS.hudScale*100)+'%';
+  const mv=document.getElementById('optv-musicVol');if(mv)mv.textContent=Math.round((SETTINGS.musicVol||0)*100)+'%';
 }
-document.querySelectorAll('#opt-ov .tgl').forEach(b=>{b.onclick=()=>{const k=b.dataset.tgl;SETTINGS[k]=!SETTINGS[k];applySettings();saveSettings();renderOptions();};});
+document.querySelectorAll('#opt-ov .tgl').forEach(b=>{b.onclick=()=>{const k=b.dataset.tgl;SETTINGS[k]=!SETTINGS[k];applySettings();saveSettings();renderOptions();if(k==='music'){if(SETTINGS.music&&G&&G.running)musicStart();else musicStop();}};});
 document.querySelectorAll('#opt-ov .stepbtn').forEach(b=>{b.onclick=()=>{
   const opt=b.dataset.opt,dir=+b.dataset.dir;
   if(opt==='speed'){let i=SPEED_OPTS.findIndex(s=>s.k===SETTINGS.speed);i=Math.max(0,Math.min(SPEED_OPTS.length-1,i+dir));SETTINGS.speed=SPEED_OPTS[i].k;}
   else if(opt==='hudScale'){SETTINGS.hudScale=Math.max(0.7,Math.min(1.4,+(SETTINGS.hudScale+dir*0.1).toFixed(2)));}
+  else if(opt==='musicVol'){SETTINGS.musicVol=Math.max(0,Math.min(1,+((SETTINGS.musicVol||0)+dir*0.1).toFixed(2)));}
   applySettings();saveSettings();renderOptions();
 };});
 function openOptions(){renderOptions();document.getElementById('opt-ov').classList.add('show');}
@@ -1758,8 +1835,8 @@ function updateContinueBtn(){
   btn.textContent=can?('CONTINUAR · '+MAPS[maxMap].emoji):'CONTINUAR';
   const rec=document.getElementById('menu-record');
   if(SAVE.runs>0||SAVE.bestLevel>1){
-    rec.innerHTML='v1.0 · PARTIDAS '+SAVE.runs+' · MEJOR NIVEL '+SAVE.bestLevel+'<br>BIOMAS '+SAVE.unlockedMaps.length+'/4 · KILLS '+SAVE.totalKills;
-  }else rec.textContent='v1.0';
+    rec.innerHTML='v2.0 · 🪙 BANCO '+(SAVE.gold||0)+' · MEJOR NIVEL '+SAVE.bestLevel+'<br>BIOMAS '+SAVE.unlockedMaps.length+'/5 · KILLS '+SAVE.totalKills+(SAVE.bestEndlessWave?' · ♾️ OLA '+SAVE.bestEndlessWave:'');
+  }else rec.textContent='v2.0 · 🪙 '+(SAVE.gold||0);
 }
 // CONTINUAR: arranca en el bioma mas avanzado desbloqueado con el ultimo heroe.
 document.getElementById('btn-continue').onclick=()=>{
@@ -1837,8 +1914,95 @@ document.getElementById('tome-close').onclick=()=>document.getElementById('tome-
 document.getElementById('tab-tomes').onclick=()=>showTomeTab(false);
 document.getElementById('tab-weapons').onclick=()=>showTomeTab(true);
 
+// FASE 7: cableado de Infinito, Tienda y Logros
+document.getElementById('btn-endless').onclick=()=>{pendingMode='endless';renderSkinStrip();showScreen('screen-select');};
+document.getElementById('btn-shop').onclick=()=>{renderShop();document.getElementById('shop-ov').classList.add('show');};
+document.getElementById('shop-close').onclick=()=>document.getElementById('shop-ov').classList.remove('show');
+document.getElementById('btn-achievements').onclick=()=>{renderAchievements();document.getElementById('ach-ov').classList.add('show');};
+document.getElementById('ach-close').onclick=()=>document.getElementById('ach-ov').classList.remove('show');
+
+// ============================================================
+//   FASE 7 — ABISMO, INFINITO, MÚSICA, LOGROS, TIENDA DE ORO
+// ============================================================
+let pendingMode='normal';
+// Jefes para el modo infinito (todos los jefes del juego)
+const ENDLESS_BOSSES=[];MAPS.forEach(m=>{if(m.boss1)ENDLESS_BOSSES.push(m.boss1);if(m.boss2)ENDLESS_BOSSES.push(m.boss2);if(m.finalBoss)ENDLESS_BOSSES.push(m.finalBoss);});
+
+// ---- Banco de oro persistente (se llena al terminar partidas) ----
+function bankGold(n){n=~~(n*(1+((SAVE.shopLevels.gold||0)*0.15)));if(n>0){SAVE.gold=(SAVE.gold||0)+n;saveProgress();}}
+
+// ---- TIENDA: mejoras permanentes compradas con oro ----
+const SHOP_ITEMS=[
+  {id:'hp',ico:'❤️',name:'Vitalidad',desc:'+8% vida máxima por nivel',max:10,cost:l=>80+l*70,apply:(p,l)=>{const a=~~(p.maxHp*0.08*l);p.maxHp+=a;p.hp+=a;}},
+  {id:'dmg',ico:'⚔️',name:'Poder',desc:'+6% daño por nivel',max:10,cost:l=>100+l*90,apply:(p,l)=>p.dmgBonusMult+=0.06*l},
+  {id:'crit',ico:'🎯',name:'Precisión',desc:'+3% crítico por nivel',max:8,cost:l=>120+l*100,apply:(p,l)=>p.critChance+=0.03*l},
+  {id:'spd',ico:'👟',name:'Agilidad',desc:'+4% velocidad por nivel',max:6,cost:l=>90+l*80,apply:(p,l)=>p.speed*=(1+0.04*l)},
+  {id:'vamp',ico:'🧛',name:'Vampirismo',desc:'+2% robo de vida por nivel',max:6,cost:l=>150+l*120,apply:(p,l)=>p.vampiric+=0.02*l},
+  {id:'regen',ico:'🩹',name:'Regeneración',desc:'+1 vida/seg por nivel',max:8,cost:l=>110+l*90,apply:(p,l)=>p.regen+=1*l},
+  {id:'proj',ico:'🗡',name:'Andanada',desc:'+1 proyectil inicial',max:3,cost:l=>400+l*350,apply:(p,l)=>p.extraKnives+=l},
+  {id:'gold',ico:'🪙',name:'Codicia',desc:'+15% oro ganado por nivel',max:8,cost:l=>120+l*110,apply:()=>{}},
+];
+const SHOP_BY={};SHOP_ITEMS.forEach(s=>SHOP_BY[s.id]=s);
+function applyShop(p){for(const s of SHOP_ITEMS){const l=SAVE.shopLevels[s.id]||0;if(l>0&&s.apply){try{s.apply(p,l);}catch(e){}}}}
+function buyShop(id){const s=SHOP_BY[id];if(!s)return;const l=SAVE.shopLevels[id]||0;if(l>=s.max)return;const c=s.cost(l);if((SAVE.gold||0)<c)return;SAVE.gold-=c;SAVE.shopLevels[id]=l+1;saveProgress();sfxBuy();renderShop();checkAchievements();}
+function renderShop(){
+  const list=document.getElementById('shop-list');if(!list)return;list.innerHTML='';
+  document.getElementById('shop-gold').textContent='🪙 '+(SAVE.gold||0);
+  SHOP_ITEMS.forEach(s=>{const l=SAVE.shopLevels[s.id]||0,maxed=l>=s.max,c=s.cost(l),afford=(SAVE.gold||0)>=c&&!maxed;
+    const row=document.createElement('div');row.className='shop-row';
+    row.innerHTML='<span class="shop-ico">'+s.ico+'</span><div class="shop-body"><div class="shop-nm">'+s.name+' <span class="shop-lv">Nv '+l+'/'+s.max+'</span></div><div class="shop-desc">'+s.desc+'</div></div>'+(maxed?'<span class="shop-max">MÁX</span>':'<button class="shop-buy'+(afford?'':' no')+'">🪙 '+c+'</button>');
+    const btn=row.querySelector('.shop-buy');if(btn)btn.onclick=()=>buyShop(s.id);
+    list.appendChild(row);});
+}
+
+// ---- LOGROS ----
+const ACHIEVEMENTS=[
+  {id:'first_blood',ico:'🩸',name:'Primera Sangre',desc:'Consigue 100 kills (total).',chk:()=>SAVE.totalKills>=100},
+  {id:'forest_clear',ico:'🌲',name:'Señor del Bosque',desc:'Desbloquea el Desierto.',chk:()=>SAVE.unlockedMaps.includes(1)},
+  {id:'desert_clear',ico:'🏜',name:'Errante de Arena',desc:'Desbloquea el Cementerio.',chk:()=>SAVE.unlockedMaps.includes(2)},
+  {id:'cem_clear',ico:'⚰',name:'Sepulturero',desc:'Desbloquea el Infierno.',chk:()=>SAVE.unlockedMaps.includes(3)},
+  {id:'hell_clear',ico:'🔥',name:'Domador del Infierno',desc:'Desbloquea el Abismo.',chk:()=>SAVE.unlockedMaps.includes(4)},
+  {id:'abyss',ico:'🌌',name:'Más allá del Vacío',desc:'Conquista EL ABISMO.',chk:()=>SAVE.abyssCleared},
+  {id:'lvl30',ico:'⭐',name:'Veterano',desc:'Alcanza nivel 30 en una partida.',chk:()=>SAVE.bestLevel>=30},
+  {id:'rich',ico:'💰',name:'Magnate',desc:'Acumula 5000 monedas (total).',chk:()=>SAVE.totalCoins>=5000},
+  {id:'endless20',ico:'♾️',name:'Imparable',desc:'Llega a la oleada 20 en Infinito.',chk:()=>SAVE.bestEndlessWave>=20},
+  {id:'bosses20',ico:'👑',name:'Cazajefes',desc:'Derrota 20 jefes (total).',chk:()=>SAVE.lifeBosses>=20},
+  {id:'shopper',ico:'🛒',name:'Cliente VIP',desc:'Compra 10 mejoras en la tienda.',chk:()=>Object.values(SAVE.shopLevels).reduce((a,b)=>a+b,0)>=10},
+  {id:'collector',ico:'🎨',name:'Coleccionista',desc:'Desbloquea 5 skins.',chk:()=>SAVE.unlockedSkins.length>=5},
+];
+function checkAchievements(){let any=false;for(const a of ACHIEVEMENTS){if(SAVE.achievements[a.id])continue;try{if(a.chk()){SAVE.achievements[a.id]=true;any=true;toast('🏆','LOGRO DESBLOQUEADO',a.name,'legendary');sfxMission();}}catch(e){}}if(any)saveProgress();}
+function renderAchievements(){
+  const list=document.getElementById('ach-list');if(!list)return;list.innerHTML='';let done=0;
+  ACHIEVEMENTS.forEach(a=>{const u=!!SAVE.achievements[a.id];if(u)done++;
+    const c=document.createElement('div');c.className='ach-card'+(u?' done':'');
+    c.innerHTML='<div class="ach-ico">'+(u?a.ico:'🔒')+'</div><div class="ach-body"><div class="ach-nm">'+a.name+'</div><div class="ach-desc">'+a.desc+'</div></div>'+(u?'<div class="ach-chk">✔</div>':'');
+    list.appendChild(c);});
+  const sm=document.getElementById('ach-summary');if(sm)sm.textContent='Completados '+done+'/'+ACHIEVEMENTS.length;
+}
+
+// ---- MÚSICA procedural + SFX extra (volumen configurable) ----
+let _musicTimer=null,_musicStep=0;
+const _bassSeq=[55,55,73.42,65.41],_leadSeq=[220,261.63,329.63,261.63,220,196,246.94,196];
+function musicNote(freq,dur,type,vol){try{if(!SETTINGS.music||!_ac)return;const o=_ac.createOscillator(),g=_ac.createGain(),now=_ac.currentTime;o.type=type;o.frequency.value=freq;const v=vol*(SETTINGS.musicVol||0);g.gain.setValueAtTime(0.0001,now);g.gain.linearRampToValueAtTime(v,now+0.03);g.gain.exponentialRampToValueAtTime(0.0001,now+dur);o.connect(g);g.connect(_ac.destination);o.start(now);o.stop(now+dur+0.02);}catch(e){}}
+function musicStart(){
+  if(!SETTINGS.music)return;_ac=_ac||new (window.AudioContext||window.webkitAudioContext)();
+  try{if(_ac.state==='suspended')_ac.resume();}catch(e){}
+  if(_musicTimer)return;_musicStep=0;
+  _musicTimer=setInterval(()=>{
+    if(!G||!G.running||G.paused||!SETTINGS.music)return;
+    const s=_musicStep++;
+    musicNote(_bassSeq[(s>>1)%_bassSeq.length],0.42,'triangle',0.16);
+    if(s%2===0)musicNote(_leadSeq[s%_leadSeq.length],0.30,'square',0.05);
+    if(s%8===0)musicNote(_bassSeq[0]/2,0.7,'sine',0.12);
+  },300);
+}
+function musicStop(){if(_musicTimer){clearInterval(_musicTimer);_musicTimer=null;}}
+function sfxBuy(){tone(660,0,.1,'square',.07);tone(880,.08,.14,'square',.06);}
+function sfxLevelUp(){[523,659,784,1047].forEach((f,i)=>tone(f,i*.07,.22,'triangle',.07));}
+function sfxPortal(){[392,523,659,784].forEach((f,i)=>tone(f,i*.08,.3,'sine',.06));}
+
 // Inicializacion Fase 1: cargar ajustes y progreso guardados.
-loadSettings();loadSave();applySettings();renderOptions();updateContinueBtn();renderSkinStrip();
+loadSettings();loadSave();applySettings();renderOptions();updateContinueBtn();renderSkinStrip();checkAchievements();
 resizeCanvas();updateIntroMapPreview();
 </script>
 </body>
