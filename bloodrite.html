@@ -980,14 +980,14 @@ DRAW_FNS.snake=(p,sx,sy,bob,fl)=>{ctx.save();ctx.translate(sx,sy+bob);if(fl)ctx.
 // CRISTIAN SLAYER — hombre fuerte de pelo y barba blancos, poleron canguro, jeans, bototos. Aspecto heroico.
 DRAW_FNS.cristian=(p,sx,sy,bob,fl)=>{ctx.save();ctx.translate(sx,sy+bob);if(fl)ctx.scale(-1,1);
   const rec=(p.recoil>0?p.recoil:0); // retroceso visual del fusil
-  // pelo blanco
-  px(-9,-31,18,6,'#eef0f4');px(-10,-29,20,4,'#dcdee4');px(-9,-32,7,3,'#ffffff');px(8,-31,3,5,'#d2d4da');
+  // pelo plateado/plomo
+  px(-9,-31,18,6,'#aab0ba');px(-10,-29,20,4,'#8f96a0');px(-9,-32,7,3,'#c8cdd6');px(8,-31,3,5,'#7e858f');
   // cara (seria, con sombra de volumen)
   px(-7,-26,14,12,'#d9a878');px(7,-26,2,12,'#bd8c5e');px(-7,-26,14,2,'#c89868');
   px(-4,-23,3,3,'#22303e');px(2,-23,3,3,'#22303e');px(-4,-23,1,1,'#5a86b6');px(2,-23,1,1,'#5a86b6'); // ojos serios
-  px(-5,-25,4,1,'#cfd2d8');px(2,-25,4,1,'#cfd2d8'); // cejas blancas
-  // barba blanca completa
-  px(-8,-19,16,8,'#f1f3f6');px(-8,-18,16,2,'#dde0e6');px(-9,-17,3,5,'#e6e8ee');px(7,-17,3,5,'#e6e8ee');px(-3,-15,6,2,'#caa078');
+  px(-5,-25,4,1,'#a9afb9');px(2,-25,4,1,'#a9afb9'); // cejas plateadas
+  // barba plateada/plomo completa
+  px(-8,-19,16,8,'#b4bac4');px(-8,-18,16,2,'#969ca6');px(-9,-17,3,5,'#a6acb6');px(7,-17,3,5,'#a6acb6');px(-3,-15,6,2,'#caa078');
   // poleron canguro (hoodie)
   px(-13,-13,26,22,'#39424f');px(-11,-11,22,18,'#454f5e');px(11,-13,2,22,'#2c343f');
   px(-14,-13,28,4,'#2e3640');px(-8,-15,16,4,'#5a6577'); // capucha
@@ -1186,10 +1186,10 @@ dp2(document.getElementById('prev-leon'),c=>{r2(c,8,0,32,14,'#e8c870');r2(c,6,4,
 dp2(document.getElementById('prev-snake'),c=>{r2(c,8,2,32,7,'#7a8a5a');r2(c,6,4,6,5,'#5a6a3a');r2(c,10,9,28,16,'#d8b088');r2(c,16,15,6,4,'#2a2a2a');r2(c,28,15,6,4,'#2a2a2a');r2(c,16,28,12,3,'#9a7a58');r2(c,4,32,40,26,'#3a4a42');r2(c,8,35,32,20,'#46564c');r2(c,18,35,8,20,'#2a3630');r2(c,-2,34,8,22,'#3a4a42');r2(c,42,34,8,22,'#3a4a42');r2(c,44,40,8,5,'#1a1a1e');r2(c,10,58,13,18,'#2e3a34');r2(c,25,58,13,18,'#2e3a34');r2(c,8,74,16,8,'#1a221e');r2(c,24,74,16,8,'#1a221e');});
 dp2(document.getElementById('prev-cristian'),c=>{
   c.save();c.globalAlpha=.5;c.fillStyle='#cc2a22';c.beginPath();c.arc(24,34,24,0,Math.PI*2);c.fill();c.globalAlpha=1; // aura roja tenue
-  r2(c,11,2,26,8,'#eef0f4');r2(c,9,5,30,5,'#dcdee4');r2(c,12,1,9,4,'#ffffff'); // pelo blanco
+  r2(c,11,2,26,8,'#aab0ba');r2(c,9,5,30,5,'#8f96a0');r2(c,12,1,9,4,'#c8cdd6'); // pelo plateado/plomo
   r2(c,12,9,24,12,'#d9a878');r2(c,30,9,6,12,'#bd8c5e'); // cara
   r2(c,16,13,4,4,'#22303e');r2(c,28,13,4,4,'#22303e'); // ojos
-  r2(c,11,18,26,9,'#f1f3f6');r2(c,11,18,26,2,'#dde0e6');r2(c,21,24,6,2,'#caa078'); // barba blanca
+  r2(c,11,18,26,9,'#b4bac4');r2(c,11,18,26,2,'#969ca6');r2(c,21,24,6,2,'#caa078'); // barba plateada
   r2(c,4,27,40,22,'#39424f');r2(c,7,29,34,16,'#454f5e');r2(c,3,27,42,4,'#2e3640'); // hoodie
   r2(c,22,28,1,9,'#d2d8e2');r2(c,26,28,1,9,'#d2d8e2');r2(c,14,40,20,8,'#2e3640'); // cordones+bolsillo
   r2(c,-2,29,8,18,'#39424f');r2(c,42,29,8,18,'#39424f'); // brazos
@@ -1592,15 +1592,15 @@ const SKINS=[
  {id:'spectral',name:'Espectral',rarity:'legendary',col:'#33ffe0',fx:'spectral',bonus:p=>{p.resist=Math.min(.75,(p.resist||0)+.10);p.maxHp+=30;p.hp+=30;},desc:'+10% resist +30 vida',mission:'surv20'},
  {id:'godfire',name:'Avatar de Fuego',rarity:'mythic',col:'#ff3b1a',fx:'mythic',bonus:p=>{p.dmgBonusMult+=.20;p.burn+=1;p.critChance+=.10;},desc:'+20% daño, incendio, +10% crítico',mission:'kills1000'},
  {id:'cosmic',name:'Ser Cósmico',rarity:'mythic',col:'#b14dff',fx:'mythic',bonus:p=>{p.dmgBonusMult+=.15;p.orbCount+=1;p.vampiric+=.08;p.maxHp+=40;p.hp+=40;},desc:'+15% daño, +1 orbe, +8% robo, +40 vida',mission:'nohit8'},
- {id:'slayer_crimson',name:'Slayer Carmesí',rarity:'rare',col:'#e22a22',fx:'glow',bonus:p=>{p.maxHp+=25;p.hp+=25;p.dmgBonusMult+=.06;},desc:'+25 vida +6% daño',req:'Alcanza nivel 15'},
- {id:'slayer_inferno',name:'Slayer Infernal',rarity:'epic',col:'#ff5522',fx:'fire',bonus:p=>{p.burn+=1;p.dmgBonusMult+=.10;p.resist=Math.min(.75,(p.resist||0)+.06);},desc:'Incendio +10% daño +6% resist',req:'Llega a la oleada 30'},
- {id:'slayer_void',name:'Slayer del Vacío',rarity:'legendary',col:'#ff2255',fx:'void',bonus:p=>{p.dmgBonusMult+=.18;p.resist=Math.min(.75,(p.resist||0)+.10);p.maxHp+=50;p.hp+=50;},desc:'+18% daño +10% resist +50 vida',req:'Derrota 15 jefes (total)'},
- {id:'slayer_primordial',name:'Slayer Primordial',rarity:'mythic',col:'#ff1a1a',fx:'mythic',bonus:p=>{p.dmgBonusMult+=.22;p.resist=Math.min(.75,(p.resist||0)+.12);p.maxHp+=70;p.hp+=70;p.shield+=20;p.maxShield+=20;},desc:'+22% daño +12% resist +70 vida +20 escudo',req:'Conquista EL ABISMO'},
+ {id:'slayer_crimson',name:'Slayer Carmesí',rarity:'rare',col:'#e22a22',fx:'glow',bonus:p=>{p.maxHp+=25;p.hp+=25;p.dmgBonusMult+=.06;},desc:'+25 vida +6% daño',req:'Alcanza nivel 30'},
+ {id:'slayer_inferno',name:'Slayer Infernal',rarity:'epic',col:'#ff5522',fx:'fire',bonus:p=>{p.burn+=1;p.dmgBonusMult+=.10;p.resist=Math.min(.75,(p.resist||0)+.06);},desc:'Incendio +10% daño +6% resist',req:'Llega a la oleada 60'},
+ {id:'slayer_void',name:'Slayer del Vacío',rarity:'legendary',col:'#ff2255',fx:'void',bonus:p=>{p.dmgBonusMult+=.18;p.resist=Math.min(.75,(p.resist||0)+.10);p.maxHp+=50;p.hp+=50;},desc:'+18% daño +10% resist +50 vida',req:'Derrota 50 jefes (total)'},
+ {id:'slayer_primordial',name:'Slayer Primordial',rarity:'mythic',col:'#ff1a1a',fx:'mythic',bonus:p=>{p.dmgBonusMult+=.22;p.resist=Math.min(.75,(p.resist||0)+.12);p.maxHp+=70;p.hp+=70;p.shield+=20;p.maxShield+=20;},desc:'+22% daño +12% resist +70 vida +20 escudo',req:'Conquista EL ABISMO y oleada 80 en Infinito'},
 ];
 const SKIN_BY={};SKINS.forEach(s=>SKIN_BY[s.id]=s);
 // Desbloqueo de skins de Slayer por progresion (sin misiones)
 function checkSlayerSkins(){const u=SAVE.unlockedSkins;let any=false;
-  const cond={slayer_crimson:SAVE.bestLevel>=15,slayer_inferno:(SAVE.bestWave||0)>=30,slayer_void:(SAVE.lifeBosses||0)>=15,slayer_primordial:!!SAVE.abyssCleared};
+  const cond={slayer_crimson:SAVE.bestLevel>=30,slayer_inferno:(SAVE.bestWave||0)>=60,slayer_void:(SAVE.lifeBosses||0)>=50,slayer_primordial:(!!SAVE.abyssCleared&&(SAVE.bestEndlessWave||0)>=80)};
   for(const id in cond){if(cond[id]&&!u.includes(id)){u.push(id);any=true;const sk=SKIN_BY[id];toast('🎨','SKIN DESBLOQUEADA',sk.name+' ('+RL2[sk.rarity]+')',sk.rarity);}}
   if(any)saveProgress();
 }
@@ -1614,18 +1614,18 @@ function equipSkin(id){if(!SAVE.unlockedSkins.includes(id))return;SAVE.equippedS
 
 // ===== MISIONES (desafios extremos) =====
 const MISSIONS=[
- {id:'kills500',ico:'💀',name:'Exterminio',diff:'★★',desc:'Acumula 500 enemigos eliminados (total).',stat:'kills_life',target:500,reward:'Skin Carmesí'},
- {id:'surv10',ico:'⏳',name:'Resistencia',diff:'★★',desc:'Sobrevive 10 minutos en una partida.',stat:'time',target:600,reward:'Skin Esmeralda'},
- {id:'lvl25',ico:'⭐',name:'Veterano',diff:'★★',desc:'Alcanza el nivel 25 en una partida.',stat:'level',target:25,reward:'Skin Azur'},
- {id:'chest15',ico:'📦',name:'Saqueador',diff:'★★★',desc:'Abre 15 cofres en una sola partida.',stat:'chests_run',target:15,reward:'Skin Sombra'},
- {id:'wave40',ico:'🌊',name:'Imparable',diff:'★★★',desc:'Llega a la oleada 40.',stat:'wave',target:40,reward:'Skin Infierno'},
- {id:'coins800',ico:'🪙',name:'Avaricia',diff:'★★★',desc:'Reúne 800 monedas en una partida.',stat:'coins_run',target:800,reward:'Gloria eterna'},
- {id:'kills1000',ico:'☠️',name:'Masacre',diff:'★★★★',desc:'Elimina 1000 enemigos en una sola partida.',stat:'kills_run',target:1000,reward:'Skin MÍTICA: Avatar de Fuego'},
- {id:'bosses12',ico:'👑',name:'Cazajefes',diff:'★★★★',desc:'Derrota 12 jefes finales (total).',stat:'bosses_life',target:12,reward:'Título: Matagigantes'},
- {id:'nohit8',ico:'🩸',name:'Intocable',diff:'★★★★★',desc:'Sobrevive 8 minutos SIN recibir daño.',stat:'nohit_time',target:480,reward:'Skin MÍTICA: Ser Cósmico'},
- {id:'lvl50',ico:'🌌',name:'Trascender',diff:'★★★★★',desc:'Alcanza el nivel 50. Casi imposible.',stat:'level',target:50,reward:'Skin Vacío'},
- {id:'surv20',ico:'🕛',name:'Eternidad',diff:'★★★★★',desc:'Sobrevive 20 minutos sin morir.',stat:'time',target:1200,reward:'Skin Espectral'},
- {id:'fullclear',ico:'🏆',name:'Conquistador',diff:'★★★★★',desc:'Conquista los 4 biomas en una sola partida.',stat:'full_clear',target:1,reward:'Skin Dorado'},
+ {id:'kills500',ico:'💀',name:'Exterminio',diff:'★★★',desc:'Acumula 3000 enemigos eliminados (total).',stat:'kills_life',target:3000,reward:'Skin Carmesí'},
+ {id:'surv10',ico:'⏳',name:'Resistencia',diff:'★★★',desc:'Sobrevive 15 minutos en una partida.',stat:'time',target:900,reward:'Skin Esmeralda'},
+ {id:'lvl25',ico:'⭐',name:'Veterano',diff:'★★★',desc:'Alcanza el nivel 35 en una partida.',stat:'level',target:35,reward:'Skin Azur'},
+ {id:'chest15',ico:'📦',name:'Saqueador',diff:'★★★★',desc:'Abre 28 cofres en una sola partida.',stat:'chests_run',target:28,reward:'Skin Sombra'},
+ {id:'wave40',ico:'🌊',name:'Imparable',diff:'★★★★',desc:'Llega a la oleada 70.',stat:'wave',target:70,reward:'Skin Infierno'},
+ {id:'coins800',ico:'🪙',name:'Avaricia',diff:'★★★★',desc:'Reúne 2500 monedas en una partida.',stat:'coins_run',target:2500,reward:'Gloria eterna'},
+ {id:'kills1000',ico:'☠️',name:'Masacre',diff:'★★★★★',desc:'Elimina 2500 enemigos en una sola partida.',stat:'kills_run',target:2500,reward:'Skin MÍTICA: Avatar de Fuego'},
+ {id:'bosses12',ico:'👑',name:'Cazajefes',diff:'★★★★★',desc:'Derrota 40 jefes (total).',stat:'bosses_life',target:40,reward:'Título: Matagigantes'},
+ {id:'nohit8',ico:'🩸',name:'Intocable',diff:'★★★★★',desc:'Sobrevive 12 minutos SIN recibir daño.',stat:'nohit_time',target:720,reward:'Skin MÍTICA: Ser Cósmico'},
+ {id:'lvl50',ico:'🌌',name:'Trascender',diff:'★★★★★',desc:'Alcanza el nivel 70. Casi imposible.',stat:'level',target:70,reward:'Skin Vacío'},
+ {id:'surv20',ico:'🕛',name:'Eternidad',diff:'★★★★★',desc:'Sobrevive 30 minutos sin morir.',stat:'time',target:1800,reward:'Skin Espectral'},
+ {id:'fullclear',ico:'🏆',name:'Conquistador',diff:'★★★★★',desc:'Conquista los 5 mundos incluido EL ABISMO en una partida.',stat:'full_clear',target:1,reward:'Skin Dorado'},
 ];
 function missionStat(key){const g=G;switch(key){
   case 'kills_run':return g?(g.runKills||0):0;
@@ -2101,18 +2101,22 @@ function renderShop(){
 
 // ---- LOGROS ----
 const ACHIEVEMENTS=[
-  {id:'first_blood',ico:'🩸',name:'Primera Sangre',desc:'Consigue 100 kills (total).',chk:()=>SAVE.totalKills>=100},
+  {id:'first_blood',ico:'🩸',name:'Primera Sangre',desc:'Consigue 1000 kills (total).',chk:()=>SAVE.totalKills>=1000},
   {id:'forest_clear',ico:'🌲',name:'Señor del Bosque',desc:'Desbloquea el Desierto.',chk:()=>SAVE.unlockedMaps.includes(1)},
   {id:'desert_clear',ico:'🏜',name:'Errante de Arena',desc:'Desbloquea el Cementerio.',chk:()=>SAVE.unlockedMaps.includes(2)},
   {id:'cem_clear',ico:'⚰',name:'Sepulturero',desc:'Desbloquea el Infierno.',chk:()=>SAVE.unlockedMaps.includes(3)},
   {id:'hell_clear',ico:'🔥',name:'Domador del Infierno',desc:'Desbloquea el Abismo.',chk:()=>SAVE.unlockedMaps.includes(4)},
   {id:'abyss',ico:'🌌',name:'Más allá del Vacío',desc:'Conquista EL ABISMO.',chk:()=>SAVE.abyssCleared},
-  {id:'lvl30',ico:'⭐',name:'Veterano',desc:'Alcanza nivel 30 en una partida.',chk:()=>SAVE.bestLevel>=30},
-  {id:'rich',ico:'💰',name:'Magnate',desc:'Acumula 5000 monedas (total).',chk:()=>SAVE.totalCoins>=5000},
-  {id:'endless20',ico:'♾️',name:'Imparable',desc:'Llega a la oleada 20 en Infinito.',chk:()=>SAVE.bestEndlessWave>=20},
-  {id:'bosses20',ico:'👑',name:'Cazajefes',desc:'Derrota 20 jefes (total).',chk:()=>SAVE.lifeBosses>=20},
-  {id:'shopper',ico:'🛒',name:'Cliente VIP',desc:'Compra 10 mejoras en la tienda.',chk:()=>Object.values(SAVE.shopLevels).reduce((a,b)=>a+b,0)>=10},
-  {id:'collector',ico:'🎨',name:'Coleccionista',desc:'Desbloquea 5 skins.',chk:()=>SAVE.unlockedSkins.length>=5},
+  {id:'lvl30',ico:'⭐',name:'Veterano',desc:'Alcanza nivel 50 en una partida.',chk:()=>SAVE.bestLevel>=50},
+  {id:'lvl70',ico:'🌟',name:'Trascendido',desc:'Alcanza nivel 70 (titánico).',chk:()=>SAVE.bestLevel>=70},
+  {id:'rich',ico:'💰',name:'Magnate',desc:'Acumula 30000 monedas (total).',chk:()=>SAVE.totalCoins>=30000},
+  {id:'endless20',ico:'♾️',name:'Imparable',desc:'Llega a la oleada 50 en Infinito.',chk:()=>SAVE.bestEndlessWave>=50},
+  {id:'endless100',ico:'💫',name:'Leyenda Infinita',desc:'Llega a la oleada 100 en Infinito.',chk:()=>SAVE.bestEndlessWave>=100},
+  {id:'bosses20',ico:'👑',name:'Cazajefes',desc:'Derrota 60 jefes (total).',chk:()=>SAVE.lifeBosses>=60},
+  {id:'shopper',ico:'🛒',name:'Cliente VIP',desc:'Compra 35 mejoras en la tienda.',chk:()=>Object.values(SAVE.shopLevels).reduce((a,b)=>a+b,0)>=35},
+  {id:'collector',ico:'🎨',name:'Coleccionista',desc:'Desbloquea 12 skins.',chk:()=>SAVE.unlockedSkins.length>=12},
+  {id:'completista',ico:'📜',name:'Completista',desc:'Completa TODAS las misiones.',chk:()=>MISSIONS.every(m=>SAVE.missions[m.id])},
+  {id:'dexmaster',ico:'📖',name:'Maestro del Bestiario',desc:'Descubre 25 criaturas.',chk:()=>Object.keys(SAVE.seen||{}).length>=25},
 ];
 function checkAchievements(){let any=false;for(const a of ACHIEVEMENTS){if(SAVE.achievements[a.id])continue;try{if(a.chk()){SAVE.achievements[a.id]=true;any=true;toast('🏆','LOGRO DESBLOQUEADO',a.name,'legendary');sfxMission();}}catch(e){}}if(any)saveProgress();checkSlayerSkins();}
 function renderAchievements(){
