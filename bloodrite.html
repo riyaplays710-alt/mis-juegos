@@ -317,6 +317,7 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .wpx-row .wpx-ico{font-size:18px;}
 .wpx-row .wpx-nm{flex:1;color:#fff;}
 .wpx-row .wpx-st{color:#9fd;font-size:6px;}
+.wpx-row.disabled{opacity:.5;filter:grayscale(.6);}
 /* ===== FASE 5: pulido de UI (brillos, flujo, ornamentos) ===== */
 .bf::before{content:'';position:absolute;top:0;bottom:0;width:38px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.32),transparent);animation:barShine 2.8s linear infinite;pointer-events:none;}
 @keyframes barShine{0%{left:-40px;}60%{left:120%;}100%{left:120%;}}
@@ -475,7 +476,7 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 <div id="tome-ov" class="ovl">
   <div class="ovl-panel" style="min-width:480px;max-width:620px;">
     <div class="ovl-title">TOMOS Y ARMAS</div>
-    <div style="font-size:6px;color:#886688;text-align:center;letter-spacing:1px;">Equipa hasta 4 TOMOS (efectos pasivos y sinergias con tus armas).</div>
+    <div style="font-size:6px;color:#886688;text-align:center;letter-spacing:1px;">Equipa hasta 4 TOMOS. Los más raros se desbloquean superando retos cada vez más difíciles.</div>
     <div id="tome-slots"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-bottom:2px;">
       <button class="tgl on" id="tab-tomes">TOMOS</button>
@@ -1149,9 +1150,15 @@ const TOMES=[
 ];
 const TOME_BY={};TOMES.forEach(t=>TOME_BY[t.id]=t);
 const MAX_TOMES=4;
-function applyTomesStats(p){for(const id of (SAVE.equippedTomes||[])){const t=TOME_BY[id];if(t&&t.apply){try{t.apply(p);}catch(e){}}}}
-function computeTagBonus(){const b={};for(const id of (SAVE.equippedTomes||[])){const t=TOME_BY[id];if(!t)continue;if(t.tagBoost)for(const k in t.tagBoost)b[k]=(b[k]||0)+t.tagBoost[k];if(t.tagBoostAll)for(const k in WTAGS)b[k]=(b[k]||0)+t.tagBoostAll;}return b;}
-function toggleTome(id){const arr=SAVE.equippedTomes||(SAVE.equippedTomes=[]);const i=arr.indexOf(id);if(i>=0)arr.splice(i,1);else{if(arr.length>=MAX_TOMES)return;arr.push(id);}saveProgress();renderTomes();}
+const RARITY_REQ={common:{test:()=>true,text:'Disponible'},rare:{test:()=>SAVE.bestLevel>=10,text:'Reto: alcanza nivel 10'},epic:{test:()=>Math.max(SAVE.bestWave||0,SAVE.bestEndlessWave||0)>=25,text:'Reto: llega a la oleada 25'},legendary:{test:()=>(SAVE.lifeBosses||0)>=25,text:'Reto: derrota 25 jefes (total)'},mythic:{test:()=>!!SAVE.abyssCleared,text:'Reto: conquista EL ABISMO'}};
+function reqMet(rar){const r=RARITY_REQ[rar];return r?r.test():true;}
+function reqText(rar){const r=RARITY_REQ[rar];return r?r.text:'';}
+function tomeUnlocked(t){return reqMet(t.rarity);}
+function weaponTier(w){const d=w.dmgPct||150;return d>=450?'legendary':d>=300?'epic':d>=215?'rare':'common';}
+function weaponUnlocked(w){return reqMet(weaponTier(w));}
+function applyTomesStats(p){for(const id of (SAVE.equippedTomes||[])){const t=TOME_BY[id];if(t&&t.apply&&tomeUnlocked(t)){try{t.apply(p);}catch(e){}}}}
+function computeTagBonus(){const b={};for(const id of (SAVE.equippedTomes||[])){const t=TOME_BY[id];if(!t||!tomeUnlocked(t))continue;if(t.tagBoost)for(const k in t.tagBoost)b[k]=(b[k]||0)+t.tagBoost[k];if(t.tagBoostAll)for(const k in WTAGS)b[k]=(b[k]||0)+t.tagBoostAll;}return b;}
+function toggleTome(id){const t=TOME_BY[id];if(!t||!tomeUnlocked(t))return;const arr=SAVE.equippedTomes||(SAVE.equippedTomes=[]);const i=arr.indexOf(id);if(i>=0)arr.splice(i,1);else{if(arr.length>=MAX_TOMES)return;arr.push(id);}saveProgress();renderTomes();}
 // Escalado de dificultad: sube suave con tiempo, oleadas, overtime y bioma.
 function diffScale(g){return g.diff*g.overTimeMult*(1+g.time/300*0.6+g.waveNum*0.015);}
 
@@ -1659,7 +1666,7 @@ function sfxMission(){[523,659,784,1047,1319].forEach((f,i)=>tone(f,i*.1,.32,'sq
 let chestPending=null;
 function rollChestReward(){
   const rar=rollRarity();
-  if(Math.random()<0.26){const w=WP[~~(Math.random()*WP.length)];return{kind:'weapon',weapon:w,rarity:rar,icon:w.emoji,name:w.name,lines:['Arma: '+w.desc]};}
+  if(Math.random()<0.26){const pool=WP.filter(weaponUnlocked);const w=(pool.length?pool:WP)[~~(Math.random()*(pool.length?pool.length:WP.length))];return{kind:'weapon',weapon:w,rarity:rar,icon:w.emoji,name:w.name,lines:['Arma: '+w.desc]};}
   const pool=ITEMS_BY_RARITY[rar].length?ITEMS_BY_RARITY[rar]:ITEMS_BY_RARITY.common;const it=pool[~~(Math.random()*pool.length)];
   return{kind:'item',item:it,rarity:rar,icon:it.icon,name:it.name,lines:it.lines};
 }
@@ -2032,16 +2039,18 @@ function renderTomes(){
     if(t){d.style.setProperty('--rc',RC2[t.rarity]);d.innerHTML=t.ico+'<span class="ts-x">×</span>';d.title=t.name;d.onclick=()=>toggleTome(id);}else d.textContent='+';
     slots.appendChild(d);}
   const grid=document.getElementById('tome-grid');grid.innerHTML='';
-  TOMES.forEach(t=>{const on=eq.includes(t.id),full=eq.length>=MAX_TOMES&&!on;
-    const c=document.createElement('div');c.className='tome-card r-'+t.rarity+(on?' equipped':'')+(full?' disabled':'');c.style.setProperty('--rc',RC2[t.rarity]);
+  TOMES.forEach(t=>{const unlocked=tomeUnlocked(t),on=eq.includes(t.id),full=eq.length>=MAX_TOMES&&!on;
+    const c=document.createElement('div');c.className='tome-card r-'+t.rarity+(on?' equipped':'')+((full||!unlocked)?' disabled':'');c.style.setProperty('--rc',RC2[t.rarity]);
     const syn=t.tagBoost?('🔗 '+Object.keys(t.tagBoost).map(k=>WTAGS[k]).join(', ')):(t.tagBoostAll?'🔗 TODAS las armas':'');
-    c.innerHTML='<div class="tc-top"><span class="tc-ico">'+t.ico+'</span><div><div class="tc-nm">'+t.name+'</div><div class="tc-rar">'+RL2[t.rarity]+'</div></div></div><div class="tc-desc">'+t.desc+'</div>'+(syn?'<div class="tc-syn">'+syn+'</div>':'')+(on?'<div class="tc-syn" style="color:#ffd24a">EQUIPADO ✔</div>':'');
-    if(!full||on)c.onclick=()=>toggleTome(t.id);grid.appendChild(c);});
+    if(!unlocked){c.innerHTML='<div class="tc-top"><span class="tc-ico">🔒</span><div><div class="tc-nm">'+t.name+'</div><div class="tc-rar">'+RL2[t.rarity]+'</div></div></div><div class="tc-desc">'+t.desc+'</div><div class="tc-syn" style="color:#ff8866">'+reqText(t.rarity)+'</div>';}
+    else{c.innerHTML='<div class="tc-top"><span class="tc-ico">'+t.ico+'</span><div><div class="tc-nm">'+t.name+'</div><div class="tc-rar">'+RL2[t.rarity]+'</div></div></div><div class="tc-desc">'+t.desc+'</div>'+(syn?'<div class="tc-syn">'+syn+'</div>':'')+(on?'<div class="tc-syn" style="color:#ffd24a">EQUIPADO ✔</div>':'');
+      if(!full||on)c.onclick=()=>toggleTome(t.id);}
+    grid.appendChild(c);});
 }
 function renderWeaponsCodex(){
   const list=document.getElementById('wpx-list');list.innerHTML='';
-  WP.forEach(w=>{const r=document.createElement('div');r.className='wpx-row';
-    r.innerHTML='<span class="wpx-ico">'+w.emoji+'</span><span class="wpx-nm">'+w.name+'<span class="wtag">'+(WTAGS[w.tag]||w.tag)+'</span></span><span class="wpx-st">⚔ '+w.dmgPct+'% · ⏱ '+w.cd+'s</span>';
+  WP.forEach(w=>{const unlocked=weaponUnlocked(w),tier=weaponTier(w);const r=document.createElement('div');r.className='wpx-row'+(unlocked?'':' disabled');
+    r.innerHTML='<span class="wpx-ico">'+(unlocked?w.emoji:'🔒')+'</span><span class="wpx-nm">'+(unlocked?w.name:'???')+' <span class="wtag" style="background:'+RC2[tier]+'33;color:'+RC2[tier]+'">'+RL2[tier]+'</span>'+(unlocked?' <span class="wtag">'+(WTAGS[w.tag]||w.tag)+'</span>':'')+'</span>'+(unlocked?'<span class="wpx-st">⚔ '+w.dmgPct+'% · ⏱ '+w.cd+'s</span>':'<span class="wpx-st" style="color:#ff8866">'+reqText(tier)+'</span>');
     list.appendChild(r);});
 }
 function showTomeTab(weapons){
@@ -2118,7 +2127,10 @@ const ACHIEVEMENTS=[
   {id:'completista',ico:'📜',name:'Completista',desc:'Completa TODAS las misiones.',chk:()=>MISSIONS.every(m=>SAVE.missions[m.id])},
   {id:'dexmaster',ico:'📖',name:'Maestro del Bestiario',desc:'Descubre 25 criaturas.',chk:()=>Object.keys(SAVE.seen||{}).length>=25},
 ];
-function checkAchievements(){let any=false;for(const a of ACHIEVEMENTS){if(SAVE.achievements[a.id])continue;try{if(a.chk()){SAVE.achievements[a.id]=true;any=true;toast('🏆','LOGRO DESBLOQUEADO',a.name,'legendary');sfxMission();}}catch(e){}}if(any)saveProgress();checkSlayerSkins();}
+function checkAchievements(){let any=false;for(const a of ACHIEVEMENTS){if(SAVE.achievements[a.id])continue;try{if(a.chk()){SAVE.achievements[a.id]=true;any=true;toast('🏆','LOGRO DESBLOQUEADO',a.name,'legendary');sfxMission();}}catch(e){}}if(any)saveProgress();checkSlayerSkins();checkContentUnlocks();}
+function checkContentUnlocks(){SAVE.tierSeen=SAVE.tierSeen||{};let any=false;
+  for(const tier of ['rare','epic','legendary','mythic']){if(!SAVE.tierSeen[tier]&&reqMet(tier)){SAVE.tierSeen[tier]=1;any=true;toast('📜','CONTENIDO DESBLOQUEADO','Tomos y armas '+RL2[tier]+' disponibles',tier);}}
+  if(any)saveProgress();}
 function renderAchievements(){
   const list=document.getElementById('ach-list');if(!list)return;list.innerHTML='';let done=0;
   ACHIEVEMENTS.forEach(a=>{const u=!!SAVE.achievements[a.id];if(u)done++;
