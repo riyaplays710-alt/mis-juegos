@@ -349,6 +349,10 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .ach-nm{font-size:8px;color:#fff;}
 .ach-desc{font-size:6px;color:#aa99bb;line-height:1.6;}
 .ach-chk{font-size:18px;color:var(--gold);}
+/* FASE 8: combo */
+#combo-ind{display:none;position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:55;color:#ffcc33;text-shadow:0 0 12px #ff6600,2px 2px 0 #000;pointer-events:none;letter-spacing:2px;font-family:'Press Start 2P',monospace;}
+#combo-ind.show{display:block;animation:comboPop .18s ease-out;}
+@keyframes comboPop{0%{transform:translateX(-50%) scale(1.35);}100%{transform:translateX(-50%) scale(1);}}
 </style>
 </head>
 
@@ -612,6 +616,7 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 <div id="go-ov"><div id="go-title">CAISTE</div><div id="go-stats"></div><div class="go-btns"><button class="gobtn" id="gorestart-btn">REINTENTAR</button><button class="gobtn" id="gomenu-btn">MENU</button></div></div>
 <div id="pause-ov"><div id="pause-title">PAUSA</div><button class="pause-btn" id="pbtn-resume">REANUDAR</button><button class="pause-btn" id="pbtn-options">OPCIONES</button><button class="pause-btn" id="pbtn-restart">REINICIAR PARTIDA</button><button class="pause-btn" id="pbtn-menu">MENU PRINCIPAL</button><div style="font-size:6px;color:#664466;margin-top:4px">ESPACIO para reanudar</div></div>
 <div id="fps-counter">FPS 60</div>
+<div id="combo-ind"></div>
 <div id="opt-ov" class="ovl">
   <div class="ovl-panel">
     <div class="ovl-title">OPCIONES</div>
@@ -754,17 +759,17 @@ let unlockedMaps=[0];
 
 function getBiome(wx,wy){if(wx<WHH&&wy<WHH)return 0;if(wx>=WHH&&wy<WHH)return 1;if(wx<WHH&&wy>=WHH)return 2;return 3;}
 // Indice de tema visual: el Abismo (5o mundo) usa su propia identidad cosmica.
-function fxIdx(cx,cy){return (typeof G!=='undefined'&&G&&G.mapDef&&G.mapDef.id==='abyss')?4:getBiome(cx,cy);}
+// Cada zona es UN solo bioma (1=Bosque,2=Desierto,3=Cementerio,4=Infierno,5=Abismo).
+function activeBiomeIdx(){return (typeof G!=='undefined'&&G&&G.mapDef&&G.mapDef.idx!=null)?G.mapDef.idx:(typeof curMapIdx!=='undefined'?curMapIdx:0);}
+function fxIdx(cx,cy){return activeBiomeIdx();}
 function biomeWeights(wx,wy){
   const R=650,dx=wx-WHH,dy=wy-WHH;
   const w=[Math.max(0,(-dx+R)/R)*Math.max(0,(-dy+R)/R),Math.max(0,(dx+R)/R)*Math.max(0,(-dy+R)/R),Math.max(0,(-dx+R)/R)*Math.max(0,(dy+R)/R),Math.max(0,(dx+R)/R)*Math.max(0,(dy+R)/R)];
   const s=w[0]+w[1]+w[2]+w[3]||1;return w.map(v=>v/s);
 }
 function blendFloor(wx,wy){
-  const w=biomeWeights(wx,wy),seed=((~~(wx/32)*31+~~(wy/32)*17)&0xfff);
-  let r=0,g2=0,b2=0;
-  for(let i=0;i<4;i++){if(w[i]<.015)continue;const col=MAPS[i].tiles[seed%MAPS[i].tiles.length],c=parseInt(col.slice(1),16);r+=((c>>16)&255)*w[i];g2+=((c>>8)&255)*w[i];b2+=(c&255)*w[i];}
-  return`rgb(${~~r},${~~g2},${~~b2})`;
+  const md=MAPS[activeBiomeIdx()],seed=((~~(wx/32)*31+~~(wy/32)*17)&0xfff);
+  return md.tiles[seed%md.tiles.length];
 }
 
 const WDECO=[],WSTONES=[],WWATER=[],WGRASS=[],WTORCH=[],WFLORA=[];
@@ -796,7 +801,7 @@ const EYE_COL={bat:'#ff3030',hellbat:'#ff5500',ghost:'#7accff',wraith:'#cc66ff',
 function eyeColor(sk){return EYE_COL[sk]||'#ff3333';}
 const PROJ_LIGHT={fireball:'#ff7722',bomb:'#ff8800',lightning:'#88ccff',spear:'#ffe066',curse:'#cc66ff',book:'#ff88ff',drain:'#44ddcc',sword:'#aaddff',arrow:'#ffe080',dagger:'#cce0ff',whip:'#ffaa44',shield:'#66aaff',boss_shot:'#ff3366'};
 // Flora detallada: flores, cristales y huesos segun bioma.
-function drawFlora(fl,sx,sy,T){const s=fl.sz,bm=fl.bm,sway=Math.sin(T/650+fl.ph)*2;ctx.save();ctx.translate(sx,sy);
+function drawFlora(fl,sx,sy,T,bm){const s=fl.sz,sway=Math.sin(T/650+fl.ph)*2;ctx.save();ctx.translate(sx,sy);
   if(fl.t===0){ // flor con tallo
     ctx.fillStyle=bm===3?'#5a1a10':'#2e6a26';ctx.fillRect(-1,-~~s,2,~~s);
     const pc=['#ff5577','#ffcc44','#cc66ff','#ff8844'][bm];ctx.fillStyle=pc;ctx.fillRect(~~(-3+sway),-~~s-4,3,3);ctx.fillRect(~~(1+sway),-~~s-4,3,3);ctx.fillRect(~~(-1+sway),-~~s-6,2,3);ctx.fillRect(~~(-1+sway),-~~s-1,2,3);ctx.fillStyle='#ffe066';ctx.fillRect(~~(-1+sway),-~~s-3,2,2);
@@ -808,9 +813,9 @@ function drawFlora(fl,sx,sy,T){const s=fl.sz,bm=fl.bm,sway=Math.sin(T/650+fl.ph)
   ctx.restore();
 }
 // Antorcha con llama animada (su luz se anade en drawLights).
-function drawTorch(tc,sx,sy,T){ctx.save();ctx.translate(sx,sy);
+function drawTorch(tc,sx,sy,T,bm){ctx.save();ctx.translate(sx,sy);
   ctx.fillStyle='#3a2410';ctx.fillRect(-2,-14,4,18);ctx.fillStyle='#22150a';ctx.fillRect(-3,-16,6,4);
-  const fl=Math.sin(T/90+tc.ph),fc=BIOME_FX[tc.bm].torch;ctx.globalAlpha=.9;
+  const fl=Math.sin(T/90+tc.ph),fc=BIOME_FX[bm==null?activeBiomeIdx():bm].torch;ctx.globalAlpha=.9;
   ctx.fillStyle='#ff3300';ctx.fillRect(-3,-24+~~(fl*.8),6,9);ctx.fillStyle=fc;ctx.fillRect(-2,-26+~~(fl),4,8);ctx.fillStyle='#ffee99';ctx.fillRect(-1,-25+~~(fl*1.2),2,5);
   ctx.globalAlpha=1;ctx.restore();
 }
@@ -832,18 +837,18 @@ function drawMap(camX,camY){
   ctx.strokeStyle='rgba(80,30,50,.07)';ctx.lineWidth=1;
   for(let wx=x0;wx<camX+CW+TS;wx+=TS){ctx.beginPath();ctx.moveTo(~~(wx-camX),0);ctx.lineTo(~~(wx-camX),CH);ctx.stroke();}
   for(let wy=y0;wy<camY+CH+TS;wy+=TS){ctx.beginPath();ctx.moveTo(0,~~(wy-camY));ctx.lineTo(CW,~~(wy-camY));ctx.stroke();}
-  for(const s of WSTONES){const sx=s.x-camX,sy=s.y-camY;if(sx<-20||sx>CW+20||sy<-20||sy>CH+20)continue;const bw=biomeWeights(s.x,s.y),bi=bw.indexOf(Math.max(...bw));ctx.globalAlpha=s.al;ctx.fillStyle=MAPS[bi].dC;ctx.fillRect(~~sx,~~sy,s.w,s.h);ctx.globalAlpha=1;}
-  for(const w of WWATER){const sx=w.x-camX,sy=w.y-camY;if(sx<-60||sx>CW+60||sy<-60||sy>CH+60)continue;const bw=biomeWeights(w.x,w.y);if(bw[w.biome]<.15)continue;ctx.globalAlpha=bw[w.biome]*.6;ctx.fillStyle=MAPS[w.biome].wC;ctx.beginPath();ctx.ellipse(sx,sy,w.rx,w.ry,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
-  for(const t of WDECO){const sx=t.x-camX,sy=t.y-camY;if(sx<-60||sx>CW+60||sy<-60||sy>CH+60)continue;const bw=biomeWeights(t.x,t.y);if(bw[t.biome]<.22)continue;ctx.globalAlpha=t.al*bw[t.biome];drawDecoTile(t.biome,t,sx,sy);ctx.globalAlpha=1;}
+  for(const s of WSTONES){const sx=s.x-camX,sy=s.y-camY;if(sx<-20||sx>CW+20||sy<-20||sy>CH+20)continue;ctx.globalAlpha=s.al;ctx.fillStyle=MAPS[bm].dC;ctx.fillRect(~~sx,~~sy,s.w,s.h);ctx.globalAlpha=1;}
+  if(bm<4){
+  for(const w of WWATER){const sx=w.x-camX,sy=w.y-camY;if(sx<-60||sx>CW+60||sy<-60||sy>CH+60)continue;ctx.globalAlpha=.5;ctx.fillStyle=MAPS[bm].wC;ctx.beginPath();ctx.ellipse(sx,sy,w.rx,w.ry,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+  for(const t of WDECO){const sx=t.x-camX,sy=t.y-camY;if(sx<-60||sx>CW+60||sy<-60||sy>CH+60)continue;ctx.globalAlpha=t.al;drawDecoTile(bm,t,sx,sy);ctx.globalAlpha=1;}
+  }
   // FASE 5: hierba/flora animada y antorchas -> mapas vivos (bajo toggle de ambiente para 60 FPS)
   const T5=Date.now();
-  if(SETTINGS.weather){
-  for(const gr of WGRASS){const sx=gr.x-camX,sy=gr.y-camY;if(sx<-12||sx>CW+12||sy<-18||sy>CH+12)continue;const bw=biomeWeights(gr.x,gr.y);if(bw[gr.bm]<.25)continue;const fx=BIOME_FX[gr.bm],col=fx.grass[~~(gr.k*fx.grass.length)],sway=Math.sin(T5/700+gr.ph)*gr.h*.22;ctx.globalAlpha=.5*bw[gr.bm];ctx.fillStyle=col;ctx.fillRect(~~sx,~~(sy-gr.h),2,~~gr.h);ctx.fillRect(~~(sx+sway),~~(sy-gr.h-2),2,3);ctx.globalAlpha=1;}
-  for(const fl of WFLORA){const sx=fl.x-camX,sy=fl.y-camY;if(sx<-20||sx>CW+20||sy<-24||sy>CH+20)continue;const bw=biomeWeights(fl.x,fl.y);if(bw[fl.bm]<.3)continue;ctx.globalAlpha=.62*bw[fl.bm];drawFlora(fl,sx,sy,T5);ctx.globalAlpha=1;}
-  for(const tc of WTORCH){const sx=tc.x-camX,sy=tc.y-camY;if(sx<-20||sx>CW+20||sy<-34||sy>CH+20)continue;const bw=biomeWeights(tc.x,tc.y);if(bw[tc.bm]<.32)continue;drawTorch(tc,sx,sy,T5);}
+  if(SETTINGS.weather&&bm<4){
+  for(const gr of WGRASS){const sx=gr.x-camX,sy=gr.y-camY;if(sx<-12||sx>CW+12||sy<-18||sy>CH+12)continue;const fx=BIOME_FX[bm],col=fx.grass[~~(gr.k*fx.grass.length)],sway=Math.sin(T5/700+gr.ph)*gr.h*.22;ctx.globalAlpha=.5;ctx.fillStyle=col;ctx.fillRect(~~sx,~~(sy-gr.h),2,~~gr.h);ctx.fillRect(~~(sx+sway),~~(sy-gr.h-2),2,3);ctx.globalAlpha=1;}
+  for(const fl of WFLORA){const sx=fl.x-camX,sy=fl.y-camY;if(sx<-20||sx>CW+20||sy<-24||sy>CH+20)continue;ctx.globalAlpha=.62;drawFlora(fl,sx,sy,T5,bm);ctx.globalAlpha=1;}
+  for(const tc of WTORCH){const sx=tc.x-camX,sy=tc.y-camY;if(sx<-20||sx>CW+20||sy<-34||sy>CH+20)continue;drawTorch(tc,sx,sy,T5,bm);}
   }
-  const bxb=WHH-camX;if(bxb>-80&&bxb<CW+80){const g2=ctx.createLinearGradient(bxb-55,0,bxb+55,0);g2.addColorStop(0,'rgba(0,0,0,0)');g2.addColorStop(.5,'rgba(0,0,0,.22)');g2.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g2;ctx.fillRect(bxb-55,0,110,CH);}
-  const byb=WHH-camY;if(byb>-80&&byb<CH+80){const g2=ctx.createLinearGradient(0,byb-55,0,byb+55);g2.addColorStop(0,'rgba(0,0,0,0)');g2.addColorStop(.5,'rgba(0,0,0,.22)');g2.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g2;ctx.fillRect(0,byb-55,CW,110);}
   const vg=ctx.createRadialGradient(CW/2,CH/2,CW*.07,CW/2,CH/2,CW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(4,0,8,.4)');ctx.fillStyle=vg;ctx.fillRect(0,0,CW,CH);
 }
 
@@ -1224,6 +1229,7 @@ function initGame(ck,mapIdx,carryPlayer,veteran,endless){
   G.tagBonus=computeTagBonus();
   G.weather=makeWeather();G.lightT=0;G.lightFlash=0; // FASE 5: clima por bioma
   G.endless=!!endless;G.secretSpawned=false;G.endBossTimer=0;G.endBossIdx=0; // FASE 7: modo infinito + jefe secreto
+  G.combo=0;G.comboTimer=0;G.comboBest=0;G.hitStop=0;G.eventTimer=55+Math.random()*30;G.frenzyTimer=0;G.meteors=[]; // FASE 8: combos, hit-stop, eventos
   if(G.endless){G.mapDef={...md,name:'SUPERVIVENCIA ∞',emoji:'♾️'};document.getElementById('map-hud').textContent='♾️ INFINITO';}
   musicStart(); // FASE 7: musica de fondo
 }
@@ -1236,12 +1242,10 @@ function openMinimap(){
   const mc=document.getElementById('minimap-canvas'),mctx=mc.getContext('2d'),S=300,scale=S/WS;
   mctx.clearRect(0,0,S,S);
   for(let x=0;x<S;x+=4){for(let y=0;y<S;y+=4){const wx=x/scale,wy=y/scale;mctx.fillStyle=blendFloor(wx+16,wy+16);mctx.fillRect(x,y,4,4);}}
-  // FASE 5: tinte y etiquetas de bioma + cuadrantes
-  const _bf=[BIOME_FX[0].amb,BIOME_FX[1].amb,BIOME_FX[2].amb,BIOME_FX[3].amb],_bq=[[0,0],[1,0],[0,1],[1,1]],hS=S/2;
-  for(let i=0;i<4;i++){mctx.fillStyle=_bf[i];mctx.fillRect(_bq[i][0]*hS,_bq[i][1]*hS,hS,hS);}
-  mctx.strokeStyle='rgba(255,255,255,.10)';mctx.lineWidth=1;mctx.beginPath();mctx.moveTo(hS,0);mctx.lineTo(hS,S);mctx.moveTo(0,hS);mctx.lineTo(S,hS);mctx.stroke();
-  mctx.font='12px serif';mctx.textAlign='center';mctx.globalAlpha=.7;
-  ['🌲','🏜','⚰','🔥'].forEach((em,i)=>mctx.fillText(em,_bq[i][0]*hS+hS/2,_bq[i][1]*hS+18));mctx.globalAlpha=1;
+  // Zona de un solo bioma: tinte + etiqueta unica
+  const _ab=activeBiomeIdx();mctx.fillStyle=BIOME_FX[_ab].amb;mctx.fillRect(0,0,S,S);
+  const _mt=document.getElementById('minimap-title');if(_mt)_mt.textContent=MAPS[_ab].emoji+' '+MAPS[_ab].name+(G&&G.endless?' ∞':'');
+  mctx.font='30px serif';mctx.textAlign='center';mctx.globalAlpha=.16;mctx.fillText(MAPS[_ab].emoji,S/2,S/2+10);mctx.globalAlpha=1;
   mctx.shadowBlur=8;
   if(G.portal.visible){mctx.shadowColor='#44ffcc';mctx.fillStyle='#44ffcc';mctx.beginPath();mctx.arc(G.portal.x*scale,G.portal.y*scale,6,0,Math.PI*2);mctx.fill();}
   mctx.shadowColor='#f0c040';for(const ch of G.chests){if(ch.open)continue;mctx.fillStyle='#f0c040';mctx.fillRect(ch.x*scale-3,ch.y*scale-3,6,6);}
@@ -1345,7 +1349,7 @@ function drawLights(g,CX,CY){
   const p=g.player;light(p.x-CX,p.y-CY-4,118,'#ffe9bb',.16);
   const sk=SKIN_BY[p.skin];if(sk&&sk.fx!=='none')light(p.x-CX,p.y-CY-4,70,sk.col,.22);
   // Antorchas (luz calida parpadeante)
-  for(const tc of WTORCH){const sx=tc.x-CX,sy=tc.y-CY;if(sx<-50||sx>GW+50||sy<-50||sy>GH+50)continue;const bw=biomeWeights(tc.x,tc.y);if(bw[tc.bm]<.32)continue;light(sx,sy-12,40+Math.sin(T/110+tc.ph)*6,BIOME_FX[tc.bm].torch,.42*bw[tc.bm]);}
+  if(activeBiomeIdx()<4)for(const tc of WTORCH){const sx=tc.x-CX,sy=tc.y-CY;if(sx<-50||sx>GW+50||sy<-50||sy>GH+50)continue;light(sx,sy-12,40+Math.sin(T/110+tc.ph)*6,BIOME_FX[activeBiomeIdx()].torch,.42);}
   // Proyectiles (luz por tipo)
   let pc=0;for(const pr of g.projs){if(pc>90)break;const lc=PROJ_LIGHT[pr.type];if(!lc)continue;const sx=pr.x-CX,sy=pr.y-CY;if(sx<-40||sx>GW+40||sy<-40||sy>GH+40)continue;light(sx,sy,16*(pr.scale||1)+9,lc,pr.crit?.6:.42);pc++;}
   // Enemigos: jefes y elites brillan
@@ -1381,7 +1385,7 @@ function drawWeather(g){if(!SETTINGS.weather)return;const bm=fxIdx(g.cam.x+GW/2,
 function drawFrame(){
   ctx.save();if(SETTINGS.screenFx&&G.shake>.5)ctx.translate((Math.random()-.5)*G.shake,(Math.random()-.5)*G.shake);
   const CX=G.cam.x,CY=G.cam.y;drawMap(CX,CY);drawPortal(G.portal,CX,CY,G.overTime);
-  for(const c of G.coinItems)drawCoin(c,CX,CY);for(const c of G.chests)drawChest(c,CX,CY);for(const t of G.totems)drawTotem(t,CX,CY);for(const t of G.traps)drawTrap(t,CX,CY);for(const pk of G.pickups)drawPickup(pk,CX,CY);for(const p of G.parts)drawPart(p,CX,CY);for(const pr of G.projs)drawPR(pr,CX,CY);for(const e of G.enemies)drawE(e,CX,CY);for(const gem of G.gems)drawGem(gem,CX,CY);drawPL(G.player,CX,CY);drawLights(G,CX,CY);
+  for(const c of G.coinItems)drawCoin(c,CX,CY);for(const c of G.chests)drawChest(c,CX,CY);for(const t of G.totems)drawTotem(t,CX,CY);for(const t of G.traps)drawTrap(t,CX,CY);for(const m of G.meteors)drawMeteor(m,CX,CY);for(const pk of G.pickups)drawPickup(pk,CX,CY);for(const p of G.parts)drawPart(p,CX,CY);for(const pr of G.projs)drawPR(pr,CX,CY);for(const e of G.enemies)drawE(e,CX,CY);for(const gem of G.gems)drawGem(gem,CX,CY);drawPL(G.player,CX,CY);drawLights(G,CX,CY);
   if(G.player.hitFlash>0){ctx.save();ctx.globalAlpha=Math.min(.55,G.player.hitFlash/12);ctx.fillStyle='#ff2222';ctx.fillRect(GW/2-18,GH/2-32,36,46);ctx.restore();} // flash rojo sobre el jugador
   if(G.overTime)pxa(0,0,GW,GH,'#cc0000',Math.min(.28,G.overTimeMult*.06)*(.5+Math.sin(Date.now()/500)*.5));
   const _hpf=G.player.hp/Math.max(1,G.player.maxHp);if(_hpf<.30){const a=(.30-_hpf)/.30,rg=ctx.createRadialGradient(GW/2,GH/2,GW*.30,GW/2,GH/2,GW*.62);rg.addColorStop(0,'transparent');rg.addColorStop(1,'rgba(170,0,0,'+(a*(.4+Math.sin(Date.now()/240)*.3)).toFixed(3)+')');ctx.fillStyle=rg;ctx.fillRect(0,0,GW,GH);} // FASE 4: vineta de vida baja
@@ -1402,12 +1406,14 @@ function killE(g,idx){
   for(let k=0;k<3;k++)g.gems.push({x:e.x+(Math.random()-.5)*24,y:e.y+(Math.random()-.5)*24,val:~~(e.xp/3)});
   if(Math.random()<.46)g.coinItems.push({x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,val:Math.max(1,~~((1+Math.random()*3)*(1+curMapIdx*.35))),life:700}); // FASE 4: oro mas frecuente y escala por bioma
   spawnPs(g,e.x,e.y,e.col,12);spawnPs(g,e.x,e.y,'#ffddaa',4,true);g.kills++;g.runKills=(g.runKills||0)+1;
+  g.combo=(g.combo||0)+1;g.comboTimer=2.6;if(g.combo>(g.comboBest||0))g.comboBest=g.combo;if(g.combo>=10&&g.combo%10===0){tone(420+g.combo*5,0,.12,'square',.06);g.hitStop=Math.max(g.hitStop,0.05);} // FASE 8: combo
   if(e.isBoss){
     if(e.isFinalBoss&&!g.endless){
       if(g.mapDef.secretBoss&&!g.secretSpawned){g.secretSpawned=true;SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;annPortal('EL VACIO DESPIERTA...\n¡El jefe secreto aparece!');flashScreen('#aa44ff');setTimeout(()=>{if(G&&G.running)spawnBossE(G,G.mapDef.secretBoss,true);},2000);}
       else{g.bfKilled=true;SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;g.portal.visible=true;annPortal('BOSS FINAL DERROTADO!\nPresiona [E] en el PORTAL para avanzar.');}
     } else {SAVE.lifeBosses=(SAVE.lifeBosses||0)+1;}
     checkAchievements();
+    g.hitStop=Math.max(g.hitStop,e.isFinalBoss?0.24:0.15); // FASE 8: hit-stop al matar jefe
     document.getElementById('boss-bar-wrap').classList.remove('show');g.curBoss=null;flashScreen('#ffffff');
     for(let k=0;k<20;k++)g.gems.push({x:e.x+(Math.random()-.5)*140,y:e.y+(Math.random()-.5)*140,val:~~(e.xp/20)});
     for(let k=0;k<10;k++)g.coinItems.push({x:e.x+(Math.random()-.5)*90,y:e.y+(Math.random()-.5)*90,val:5+~~(Math.random()*10),life:800});
@@ -1597,6 +1603,7 @@ function goNextMap(){
 function startLoop(){ if(_loopAlive)return; _loopAlive=true; lastTime=performance.now(); requestAnimationFrame(update); }
 function update(ts){
   if(!G||!G.running){_loopAlive=false;return;}const dt=Math.min((ts-lastTime)/1000,.05);lastTime=ts;if(G.paused){requestAnimationFrame(update);return;}
+  if(G.hitStop>0){G.hitStop-=dt;updateHUD();drawFrame();updateFps(ts);requestAnimationFrame(update);return;} // FASE 8: hit-stop (congela el mundo unos frames)
   G.time+=dt;const p=G.player,md=G.mapDef;
   let ix=0,iy=0;if(G.keys['ArrowLeft']||G.keys['a']||G.keys['A'])ix-=1;if(G.keys['ArrowRight']||G.keys['d']||G.keys['D'])ix+=1;if(G.keys['ArrowUp']||G.keys['w']||G.keys['W'])iy-=1;if(G.keys['ArrowDown']||G.keys['s']||G.keys['S'])iy+=1;if(ix&&iy){ix*=.707;iy*=.707;}if(ix)p.facing=Math.sign(ix);
   // Velocidad efectiva: escalada global + dash de la habilidad Rodada (Leon)
@@ -1612,6 +1619,11 @@ function update(ts){
   p.regenTimer=(p.regenTimer||0)+dt;if(p.regen>0&&p.regenTimer>=1){p.hp=Math.min(p.maxHp,p.hp+p.regen);p.regenTimer=0;}
   if(p.shieldRegen>0&&p.maxShield>0){p.shieldRegenTimer=(p.shieldRegenTimer||0)+dt;if(p.shieldRegenTimer>=1){p.shield=Math.min(p.maxShield,p.shield+p.shieldRegen);p.shieldRegenTimer=0;}}
   G.misTimer=(G.misTimer||0)+dt;if(G.misTimer>=1){G.misTimer=0;checkMissions();checkAchievements();}
+  // FASE 8: combos, frenesi, eventos y meteoros
+  G.comboTimer-=dt;if(G.comboTimer<=0&&G.combo>0)G.combo=0;
+  G.frenzyTimer=Math.max(0,(G.frenzyTimer||0)-dt);
+  G.eventTimer-=dt;if(G.eventTimer<=0&&!G.curBoss&&G.time>30){G.eventTimer=70+Math.random()*55;triggerEvent(G);}
+  for(let i=G.meteors.length-1;i>=0;i--){const m=G.meteors[i];m.t-=dt;if(m.t<=0){meteorImpact(G,m);G.meteors.splice(i,1);}}
   if(p.maxMana>0){p.manaTimer+=dt;if(p.manaTimer>=1){p.mana=Math.min(p.maxMana,p.mana+p.manaRegen);p.manaTimer=0;}}
   G.cam.x+=((p.x-GW/2)-G.cam.x)*Math.min(1,dt*9);G.cam.y+=((p.y-GH/2)-G.cam.y)*Math.min(1,dt*9); // FASE 5: cámara suave (lerp)
   updateWeather(G,dt);
@@ -1656,7 +1668,7 @@ function update(ts){
   G.waveTimer+=dt;if(G.waveTimer>=CONFIG.WAVE_EVERY){G.waveTimer=0;G.waveNum++;G.wave=G.waveNum;const cnt=3+~~(G.waveNum*.8);spawnWave(G,cnt);annWave('OLA '+G.waveNum+' — '+cnt+' enemigos');}
   G.spawnTimer+=dt;if(G.spawnTimer>=Math.max(.22,G.spawnRate-G.time*.003-p.level*.01)){G.spawnTimer=0;spawnWave(G,1+~~(G.time/42)+~~(p.level/7));}
   // Weapons
-  for(const w of G.weapons){w.timer-=dt;if(w.timer<=0){w.timer=w.cd*p.cdMult;if(FIRES[w.fire])FIRES[w.fire](G,w);}}
+  for(const w of G.weapons){w.timer-=dt;if(w.timer<=0){w.timer=w.cd*p.cdMult*(G.frenzyTimer>0?0.55:1);if(FIRES[w.fire])FIRES[w.fire](G,w);}}
   // Projectiles
   for(let i=G.projs.length-1;i>=0;i--){const pr=G.projs[i];if(pr.orbit){pr.orbitA+=pr.orbitSpd;pr.x=p.x+Math.cos(pr.orbitA)*pr.orbitR;pr.y=p.y+Math.sin(pr.orbitA)*pr.orbitR;}else{const _pm=GAME_SPEED*(pr.fromBoss?1:(p.projSpeedMult||1));pr.x+=pr.vx*_pm;pr.y+=pr.vy*_pm;}pr.life--;if(pr.life<=0){if(pr.explode)explodeBomb(G,pr);G.projs.splice(i,1);continue;}if(pr.fromBoss){if(overlap(pr.x,pr.y,6,6,p.x,p.y,p.w,p.h)){damageP(G,pr.dmg);G.projs.splice(i,1);}continue;}let hit=false;for(let j=G.enemies.length-1;j>=0;j--){const e=G.enemies[j];if(!overlap(pr.x,pr.y,6*pr.scale,6*pr.scale,e.x,e.y,e.w,e.h))continue;if(pr.dmg>0){e.hp-=pr.dmg;e.hf=8;spawnPs(G,e.x,e.y,'#ff4444',6);spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(p.burn>0){e.burnT=120;e.burnDmg=(p.baseDmg*playerDmgMult(p))*.25*p.burn;}if(p.vampiric>0)p.hp=Math.min(p.maxHp,p.hp+pr.dmg*p.vampiric);if(e.hp<=0){killE(G,j);continue;}}if(pr.pierce&&pr.pierce>0)pr.pierce--;else if(!['shield','lightning','drain','whip'].includes(pr.type)&&!pr.orbit){hit=true;break;}}if(hit)G.projs.splice(i,1);}
   // Traps
@@ -1741,6 +1753,8 @@ function updateHUD(){
   pass.push('👹'+G.enemies.length);
   const tomeIcos=(SAVE.equippedTomes||[]).map(id=>TOME_BY[id]?TOME_BY[id].ico:'').join('');
   setHTML('pass-list',pass.map(x=>'<span>'+x+'</span>').join('')+(tomeIcos?'<span style="opacity:.85">📚'+tomeIcos+'</span>':''));
+  // FASE 8: indicador de combo
+  const ci=H('combo-ind');if(ci){if((G.combo||0)>=5){if(ci._c!==G.combo){ci.textContent='COMBO x'+G.combo+(G.combo>=40?' 🔥🔥':(G.combo>=20?' 🔥':''));ci.style.fontSize=(13+Math.min(11,G.combo*0.22))+'px';ci.classList.remove('show');void ci.offsetWidth;ci.classList.add('show');ci._c=G.combo;}}else if(ci._c!==0){ci.classList.remove('show');ci._c=0;}}
   let phase='';if(G.bfKilled)phase='🌀 [E] Portal -> siguiente';else if(G.bfSpawned)phase='☠ JEFE FINAL';else if(G.overTime)phase='🔥 PELIGRO x'+G.overTimeMult.toFixed(1);else if(G.portal.visible&&!G.portal.activated)phase='🌀 [E] Portal disponible';else if(G.b2Spawned)phase='☠ BOSS 2';else if(G.b1Spawned&&!G.curBoss&&G.time<md.portalTime)phase='Portal en '+(~~Math.max(0,md.portalTime-G.time))+'s';else if(G.b1Spawned)phase='☠ BOSS 1';else phase='Boss en '+(~~Math.max(0,md.bossTime-G.time))+'s';
   setTxt('phase-hud',phase);
   const si=H('special-ind'),sp=SPECIALS[p.charKey];
@@ -2000,6 +2014,28 @@ function musicStop(){if(_musicTimer){clearInterval(_musicTimer);_musicTimer=null
 function sfxBuy(){tone(660,0,.1,'square',.07);tone(880,.08,.14,'square',.06);}
 function sfxLevelUp(){[523,659,784,1047].forEach((f,i)=>tone(f,i*.07,.22,'triangle',.07));}
 function sfxPortal(){[392,523,659,784].forEach((f,i)=>tone(f,i*.08,.3,'sine',.06));}
+
+// ---- EVENTOS ALEATORIOS ----
+function triggerEvent(g){
+  const p=g.player,ev=['horda','tesoro','frenesi','meteoros'][~~(Math.random()*4)];
+  if(ev==='horda'){spawnWave(g,14);annWave('⚔️ ¡HORDA! Una marea de enemigos llega');flashScreen('#ff3030');g.shake=Math.max(g.shake,8);}
+  else if(ev==='tesoro'){for(let i=0;i<28;i++)g.coinItems.push({x:p.x+(Math.random()-.5)*340,y:p.y+(Math.random()-.5)*340,val:2+~~(Math.random()*5),life:900});for(let i=0;i<14;i++)g.gems.push({x:p.x+(Math.random()-.5)*300,y:p.y+(Math.random()-.5)*300,val:8});annWave('💰 ¡LLUVIA DE TESOROS!');sfxBuy();}
+  else if(ev==='frenesi'){g.frenzyTimer=15;p.furyTimer=Math.max(p.furyTimer,900);annWave('🔥 ¡FRENESÍ! +Velocidad de ataque 15s');flashScreen('#ffaa00');}
+  else{const n=10+~~(Math.random()*6);for(let i=0;i<n;i++)g.meteors.push({x:p.x+(Math.random()-.5)*GW*.9,y:p.y+(Math.random()-.5)*GH*.85,t:1.0+Math.random()*2.4,r:60+Math.random()*30});annWave('☄️ ¡LLUVIA DE METEOROS! Esquiva las marcas');}
+}
+function meteorImpact(g,m){
+  const dmg=~~(220*(1+curMapIdx*0.6)*(g.diff||1));
+  for(let j=g.enemies.length-1;j>=0;j--){const e=g.enemies[j];if(Math.hypot(e.x-m.x,e.y-m.y)<m.r){e.hp-=dmg;e.hf=14;spawnDN(e.x,e.y,dmg,false,false);if(e.hp<=0)killE(g,j);}}
+  const p=g.player;if(Math.hypot(p.x-m.x,p.y-m.y)<m.r)damageP(g,20);
+  spawnPs(g,m.x,m.y,'#ff7722',34,true);spawnPs(g,m.x,m.y,'#ffdd44',20,true);spawnPs(g,m.x,m.y,'#553322',16);g.shake=Math.max(g.shake,11);flashScreen('#ffaa44');
+}
+function drawMeteor(m,cx,cy){const sx=m.x-cx,sy=m.y-cy;if(sx<-80||sx>GW+80||sy<-80||sy>GH+80)return;const T=Date.now(),k=1-Math.min(1,m.t/2.0);
+  ctx.save();ctx.globalAlpha=.35+Math.sin(T/80)*.2;ctx.strokeStyle='#ff3322';ctx.lineWidth=3;ctx.beginPath();ctx.arc(sx,sy,m.r,0,Math.PI*2);ctx.stroke();
+  ctx.globalAlpha=.18;ctx.fillStyle='#ff5522';ctx.beginPath();ctx.arc(sx,sy,m.r*(0.3+k*0.7),0,Math.PI*2);ctx.fill();
+  // roca cayendo
+  const fall=(1-Math.min(1,m.t/0.6));if(m.t<0.6){ctx.globalAlpha=1;ctx.fillStyle='#3a1a0a';const my=sy-160*(1-fall);ctx.fillRect(~~sx-7,~~my-7,14,14);ctx.fillStyle='#ff6622';ctx.fillRect(~~sx-9,~~my-9,5,5);}
+  ctx.restore();
+}
 
 // Inicializacion Fase 1: cargar ajustes y progreso guardados.
 loadSettings();loadSave();applySettings();renderOptions();updateContinueBtn();renderSkinStrip();checkAchievements();
