@@ -738,13 +738,7 @@ const canvas=document.getElementById('game-canvas');
 const ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 let GW=1920,GH=1080;
-// Render a resolucion nativa (nitidez total). El lag previo era por otros programas (musica/chat) consumiendo recursos, no por el juego.
-function resizeCanvas(){
-  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block;';
-  GW=window.innerWidth;GH=window.innerHeight;
-  canvas.width=GW;canvas.height=GH;
-  ctx.imageSmoothingEnabled=false;
-}
+function resizeCanvas(){canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block;';GW=window.innerWidth;GH=window.innerHeight;canvas.width=GW;canvas.height=GH;}
 window.addEventListener('resize',()=>{resizeCanvas();if(G){G.cam.x=G.player.x-GW/2;G.cam.y=G.player.y-GH/2;}});
 resizeCanvas();
 function px(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(~~x,~~y,w,h);}
@@ -886,10 +880,9 @@ function drawMap(camX,camY){
   // FASE 5: hierba/flora animada y antorchas -> mapas vivos (bajo toggle de ambiente para 60 FPS)
   const T5=Date.now();
   if(SETTINGS.weather&&bm<4){
-  const _gstep=PERF>=1?1:(PERF>=0.66?2:3); // OPTIMIZACION: dibuja menos hierba si baja el rendimiento
-  for(let gi=0;gi<WGRASS.length;gi+=_gstep){const gr=WGRASS[gi];const sx=gr.x-camX,sy=gr.y-camY;if(sx<-12||sx>CW+12||sy<-18||sy>CH+12)continue;const fx=BIOME_FX[bm],col=fx.grass[~~(gr.k*fx.grass.length)],sway=Math.sin(T5/700+gr.ph)*gr.h*.22;ctx.globalAlpha=.5;ctx.fillStyle=col;ctx.fillRect(~~sx,~~(sy-gr.h),2,~~gr.h);ctx.fillRect(~~(sx+sway),~~(sy-gr.h-2),2,3);ctx.globalAlpha=1;}
+  for(const gr of WGRASS){const sx=gr.x-camX,sy=gr.y-camY;if(sx<-12||sx>CW+12||sy<-18||sy>CH+12)continue;const fx=BIOME_FX[bm],col=fx.grass[~~(gr.k*fx.grass.length)],sway=Math.sin(T5/700+gr.ph)*gr.h*.22;ctx.globalAlpha=.5;ctx.fillStyle=col;ctx.fillRect(~~sx,~~(sy-gr.h),2,~~gr.h);ctx.fillRect(~~(sx+sway),~~(sy-gr.h-2),2,3);ctx.globalAlpha=1;}
   for(const fl of WFLORA){const sx=fl.x-camX,sy=fl.y-camY;if(sx<-20||sx>CW+20||sy<-24||sy>CH+20)continue;ctx.globalAlpha=.62;drawFlora(fl,sx,sy,T5,bm);ctx.globalAlpha=1;}
-  if(PERF>=0.66)for(const tc of WTORCH){const sx=tc.x-camX,sy=tc.y-camY;if(sx<-20||sx>CW+20||sy<-34||sy>CH+20)continue;drawTorch(tc,sx,sy,T5,bm);}
+  for(const tc of WTORCH){const sx=tc.x-camX,sy=tc.y-camY;if(sx<-20||sx>CW+20||sy<-34||sy>CH+20)continue;drawTorch(tc,sx,sy,T5,bm);}
   }
   const vg=ctx.createRadialGradient(CW/2,CH/2,CW*.07,CW/2,CH/2,CW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(4,0,8,.4)');ctx.fillStyle=vg;ctx.fillRect(0,0,CW,CH);
 }
@@ -1461,15 +1454,14 @@ function drawPart(p,cx,cy){const lf=p.life/p.maxLife,sx=p.x-cx,sy=p.y-cy;if(p.gl
 
 // ===== FASE 5: ILUMINACION DINAMICA (glow aditivo cacheado) =====
 function drawLights(g,CX,CY){
-  if(!SETTINGS.lighting||PERF<0.66)return; // OPTIMIZACION: en modo bajo se desactiva la iluminacion dinamica
-  const T=Date.now();
+  if(!SETTINGS.lighting)return;const T=Date.now();
   ctx.save();ctx.globalCompositeOperation='lighter';
   const p=g.player;light(p.x-CX,p.y-CY-4,118,'#ffe9bb',.16);
   const sk=SKIN_BY[p.skin];if(sk&&sk.fx!=='none')light(p.x-CX,p.y-CY-4,70,sk.col,.22);
-  // Antorchas (luz calida parpadeante) — solo en calidad alta
-  if(PERF>=1&&activeBiomeIdx()<4)for(const tc of WTORCH){const sx=tc.x-CX,sy=tc.y-CY;if(sx<-50||sx>GW+50||sy<-50||sy>GH+50)continue;light(sx,sy-12,40+Math.sin(T/110+tc.ph)*6,BIOME_FX[activeBiomeIdx()].torch,.42);}
+  // Antorchas (luz calida parpadeante)
+  if(activeBiomeIdx()<4)for(const tc of WTORCH){const sx=tc.x-CX,sy=tc.y-CY;if(sx<-50||sx>GW+50||sy<-50||sy>GH+50)continue;light(sx,sy-12,40+Math.sin(T/110+tc.ph)*6,BIOME_FX[activeBiomeIdx()].torch,.42);}
   // Proyectiles (luz por tipo)
-  const _pcap=PERF>=1?90:40;let pc=0;for(const pr of g.projs){if(pc>_pcap)break;const lc=PROJ_LIGHT[pr.type];if(!lc)continue;const sx=pr.x-CX,sy=pr.y-CY;if(sx<-40||sx>GW+40||sy<-40||sy>GH+40)continue;light(sx,sy,16*(pr.scale||1)+9,lc,pr.crit?.6:.42);pc++;}
+  let pc=0;for(const pr of g.projs){if(pc>90)break;const lc=PROJ_LIGHT[pr.type];if(!lc)continue;const sx=pr.x-CX,sy=pr.y-CY;if(sx<-40||sx>GW+40||sy<-40||sy>GH+40)continue;light(sx,sy,16*(pr.scale||1)+9,lc,pr.crit?.6:.42);pc++;}
   // Enemigos: jefes y elites brillan
   for(const e of g.enemies){const sx=e.x-CX,sy=e.y-CY;if(sx<-70||sx>GW+70||sy<-70||sy>GH+70)continue;if(e.isBoss)light(sx,sy,95,e.col,.26+Math.sin(T/240)*.06);else if(e.elite)light(sx,sy,46,'#ff66cc',.3+Math.sin(T/200)*.12);if(e.shockT>0)light(sx,sy,e.w*.9,'#ffee44',.42);else if(e.poisonT>0)light(sx,sy,e.w*.85,'#55dd33',.3);else if(e.chillT>0)light(sx,sy,e.w*.85,'#66bbff',.3);const ec=eyeColor(e.skin),er=e.isBoss?15:6.5;light(sx,sy-e.h*.45,er,ec,(e.isBoss?.6:.4)+Math.sin(T/180+e.x)*.08);}
   // Totems (aura magica)
@@ -1509,17 +1501,8 @@ function drawFrame(){
   const _hpf=G.player.hp/Math.max(1,G.player.maxHp);if(_hpf<.30){const a=(.30-_hpf)/.30,rg=ctx.createRadialGradient(GW/2,GH/2,GW*.30,GW/2,GH/2,GW*.62);rg.addColorStop(0,'transparent');rg.addColorStop(1,'rgba(170,0,0,'+(a*(.4+Math.sin(Date.now()/240)*.3)).toFixed(3)+')');ctx.fillStyle=rg;ctx.fillRect(0,0,GW,GH);} // FASE 4: vineta de vida baja
   const lg=ctx.createRadialGradient(GW/2,GH/2,10,GW/2,GH/2,190);lg.addColorStop(0,'rgba(255,240,205,.10)');lg.addColorStop(1,'transparent');ctx.fillStyle=lg;ctx.fillRect(0,0,GW,GH); // luz ambiental suave alrededor del jugador
   const _bm=fxIdx(CX+GW/2,CY+GH/2),_fx=BIOME_FX[_bm];ctx.fillStyle=_fx.amb;ctx.fillRect(0,0,GW,GH); // FASE 5: tinte ambiental del bioma
-  ctx.drawImage(vignetteSprite(_bm),0,0,GW,GH);ctx.restore(); // viñeta tintada (cacheada) -> evita recrear el gradiente cada frame
+  const vg=ctx.createRadialGradient(GW/2,GH/2,GW*.07,GW/2,GH/2,GW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,_fx.vig);ctx.fillStyle=vg;ctx.fillRect(0,0,GW,GH);ctx.restore(); // viñeta tintada por bioma
   drawWeather(G); // FASE 5: clima/ambiente encima
-}
-// OPTIMIZACION: viñeta cacheada por bioma (se regenera solo si cambia el tamaño o el bioma).
-let _vigCache={},_vigW=0,_vigH=0;
-function vignetteSprite(bm){
-  if(_vigW!==GW||_vigH!==GH){_vigCache={};_vigW=GW;_vigH=GH;}
-  if(_vigCache[bm])return _vigCache[bm];
-  const c=document.createElement('canvas');c.width=GW;c.height=GH;const x=c.getContext('2d');
-  const vg=x.createRadialGradient(GW/2,GH/2,GW*.07,GW/2,GH/2,GW*.57);vg.addColorStop(0,'transparent');vg.addColorStop(1,BIOME_FX[bm].vig);x.fillStyle=vg;x.fillRect(0,0,GW,GH);
-  _vigCache[bm]=c;return c;
 }
 
 function overlap(ax,ay,aw,ah,bx,by,bw,bh){return ax-aw/2<bx+bw/2&&ax+aw/2>bx-bw/2&&ay-ah/2<by+bh/2&&ay+ah/2>by-bh/2;}
@@ -1865,21 +1848,15 @@ function update(ts){
   if(G.shake>0)G.shake*=.77;updateHUD();drawFrame();updateFps(ts);requestAnimationFrame(update);
 }
 // Contador de FPS: promedio movil; solo actualiza el DOM ~4 veces/seg.
-let _fpsAccum=0,_fpsFrames=0,_fpsLast=0,_fpsShown=60;
-// OPTIMIZACION: auto-rendimiento. Mide FPS siempre (aunque el contador este oculto)
-// y si bajan, reduce efectos pesados automaticamente para recuperar fluidez.
-let PERF=1; // 1=alto, 0.66=medio, 0.4=bajo
-let _perfLowStreak=0,_perfHighStreak=0;
+let _fpsAccum=0,_fpsFrames=0,_fpsLast=0,_fpsShown=0;
 function updateFps(ts){
+  if(!SETTINGS.showFps)return;
   if(_fpsLast){_fpsAccum+=ts-_fpsLast;_fpsFrames++;}
   _fpsLast=ts;
-  if(_fpsAccum>=400&&_fpsFrames>0){
+  if(_fpsAccum>=250&&_fpsFrames>0){
     _fpsShown=Math.round(1000/(_fpsAccum/_fpsFrames));_fpsAccum=0;_fpsFrames=0;
-    if(SETTINGS.showFps){const el=document.getElementById('fps-counter');if(el){el.textContent='FPS '+_fpsShown+(PERF<1?' ⚙'+Math.round(PERF*100):'');el.classList.toggle('warn',_fpsShown<50&&_fpsShown>=30);el.classList.toggle('bad',_fpsShown<30);}}
-    // Ajuste automatico de calidad
-    if(_fpsShown<46){_perfLowStreak++;_perfHighStreak=0;if(_perfLowStreak>=2&&PERF>0.4){PERF=PERF>0.66?0.66:0.4;_perfLowStreak=0;}}
-    else if(_fpsShown>58){_perfHighStreak++;_perfLowStreak=0;if(_perfHighStreak>=8&&PERF<1){PERF=PERF<0.66?0.66:1;_perfHighStreak=0;}}
-    else{_perfLowStreak=0;_perfHighStreak=0;}
+    const el=document.getElementById('fps-counter');
+    if(el){el.textContent='FPS '+_fpsShown;el.classList.toggle('warn',_fpsShown<50&&_fpsShown>=30);el.classList.toggle('bad',_fpsShown<30);}
   }
 }
 function explodeBomb(g,pr){const rad=62*pr.scale;for(let j=g.enemies.length-1;j>=0;j--){const e=g.enemies[j];if(Math.hypot(e.x-pr.x,e.y-pr.y)<rad){e.hp-=pr.dmg;e.hf=14;spawnDN(e.x,e.y,pr.dmg,pr.crit,false);if(e.hp<=0)killE(g,j);}}spawnPs(g,pr.x,pr.y,'#ff8800',30,true);spawnPs(g,pr.x,pr.y,'#ffdd00',20,true);spawnPs(g,pr.x,pr.y,'#552200',16);g.shake=Math.max(g.shake,10);flashScreen('#ffaa00');}
