@@ -738,15 +738,10 @@ const canvas=document.getElementById('game-canvas');
 const ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 let GW=1920,GH=1080;
-// OPTIMIZACION: limita la resolucion INTERNA del canvas (fill-rate) y deja que CSS lo estire.
-// En pantallas grandes (1080p/4K) esto reduce drasticamente los pixeles a dibujar -> 60 FPS.
-// Como es pixel art, escalar por CSS no degrada la imagen.
-let RENDER_CAP=1280; // ancho logico maximo del buffer de render
+// Render a resolucion nativa (nitidez total). El lag previo era por otros programas (musica/chat) consumiendo recursos, no por el juego.
 function resizeCanvas(){
-  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;';
-  const w=window.innerWidth,h=window.innerHeight;
-  const scale=Math.min(1,RENDER_CAP/w);
-  GW=Math.round(w*scale);GH=Math.round(h*scale);
+  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:block;';
+  GW=window.innerWidth;GH=window.innerHeight;
   canvas.width=GW;canvas.height=GH;
   ctx.imageSmoothingEnabled=false;
 }
