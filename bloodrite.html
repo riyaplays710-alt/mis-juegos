@@ -366,10 +366,37 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .dex-card.boss .dex-nm{color:var(--gold);}
 /* crédito del autor (abajo a la derecha del menú) */
 #credit-tag{position:absolute;right:12px;bottom:10px;z-index:10;font-size:7px;color:#7a5c8a;letter-spacing:1px;text-shadow:1px 1px 0 #000;pointer-events:none;opacity:.8;}
+/* === RETOQUES FINALES: splash + tutorial === */
+#splash{position:fixed;inset:0;z-index:500;background:radial-gradient(ellipse at 50% 45%,#1a0520,#040208);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:opacity .5s;}
+#splash.hide{opacity:0;pointer-events:none;}
+#splash-skull{font-size:60px;animation:splashBob 1.6s ease-in-out infinite alternate;filter:drop-shadow(0 0 18px #ff0033);}
+@keyframes splashBob{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+#splash-logo{font-size:46px;line-height:.95;color:#fff;text-align:center;letter-spacing:3px;text-shadow:0 0 18px #ff0033,0 0 40px #88001a;}
+#splash-logo span{color:#e01828;}
+#splash-sub{font-size:9px;color:var(--gold);letter-spacing:6px;}
+#splash-press{margin-top:22px;font-size:11px;color:#fff;letter-spacing:2px;animation:pressBlink 1.1s steps(2) infinite;}
+@keyframes pressBlink{50%{opacity:.25}}
+#splash-cred{position:absolute;bottom:14px;font-size:7px;color:#7a5c8a;letter-spacing:1px;}
+#tut-ov{display:none;position:fixed;inset:0;z-index:130;background:rgba(4,2,10,.92);align-items:center;justify-content:center;}
+#tut-ov.show{display:flex;}
+#tut-panel{background:linear-gradient(160deg,#0e0818,#140c24,#0e0818);border:3px solid var(--gold);padding:22px 26px;min-width:340px;max-width:430px;display:flex;flex-direction:column;gap:9px;box-shadow:0 0 60px rgba(240,192,64,.3);}
+#tut-title{font-size:15px;color:var(--gold);letter-spacing:3px;text-align:center;text-shadow:0 0 14px var(--gold);margin-bottom:6px;}
+.tut-row{display:flex;align-items:center;gap:12px;font-size:8px;color:#ddd;}
+.tut-k{min-width:80px;background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.4);color:var(--gold);padding:6px 8px;text-align:center;border-radius:3px;font-size:7px;}
+.tut-d{flex:1;color:#cbb;}
+#tut-tip{font-size:7px;color:#9a88b0;line-height:1.9;margin-top:6px;border-top:1px solid #2a1c38;padding-top:9px;}
+#tut-close{margin-top:10px;font-size:9px;align-self:center;}
 </style>
 </head>
 
 <body>
+<div id="splash" onclick="dismissSplash()">
+  <div id="splash-skull">💀</div>
+  <div id="splash-logo">BLOOD<br><span>RITE</span></div>
+  <div id="splash-sub">SUPERVIVENCIA</div>
+  <div id="splash-press">▶ CLICK PARA COMENZAR</div>
+  <div id="splash-cred">creado por riyaplays710</div>
+</div>
 <div id="scf"></div>
 <div id="danger-flash"></div>
 <div id="boss-bar-wrap"><div id="boss-name-lbl">JEFE</div><div id="boss-bar-bg"><div id="boss-bar-fill" style="width:100%"></div></div></div>
@@ -453,7 +480,7 @@ body.hud-hide-bot #bot-hud{display:none!important;}
       <button class="pxbtn menu-btn" id="btn-options">OPCIONES</button>
       <button class="pxbtn menu-btn" id="btn-credits">CONTROLES</button>
     </div>
-    <div id="menu-record">v1.0</div>
+    <div id="menu-record">v2.0</div>
   </div>
   <div id="credit-tag">creado por riyaplays710</div>
 </div>
@@ -649,6 +676,19 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 <div id="totem-ov"><div id="totem-title">TOTEM ANCESTRAL</div><div id="totem-sub">Elige una bendicion:</div><div id="totem-cards" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"></div></div>
 <div id="go-ov"><div id="go-title">CAISTE</div><div id="go-stats"></div><div class="go-btns"><button class="gobtn" id="gorestart-btn">REINTENTAR</button><button class="gobtn" id="gomenu-btn">MENU</button></div></div>
 <div id="pause-ov"><div id="pause-title">PAUSA</div><button class="pause-btn" id="pbtn-resume">REANUDAR</button><button class="pause-btn" id="pbtn-options">OPCIONES</button><button class="pause-btn" id="pbtn-restart">REINICIAR PARTIDA</button><button class="pause-btn" id="pbtn-menu">MENU PRINCIPAL</button><div style="font-size:6px;color:#664466;margin-top:4px">ESPACIO para reanudar</div></div>
+<div id="tut-ov">
+  <div id="tut-panel">
+    <div id="tut-title">CÓMO JUGAR</div>
+    <div class="tut-row"><span class="tut-k">W A S D</span><span class="tut-d">Mover al héroe</span></div>
+    <div class="tut-row"><span class="tut-k">AUTO</span><span class="tut-d">Atacas solo al enemigo más cercano</span></div>
+    <div class="tut-row"><span class="tut-k">Q</span><span class="tut-d">Habilidad especial</span></div>
+    <div class="tut-row"><span class="tut-k">E</span><span class="tut-d">Abrir cofres / activar portal</span></div>
+    <div class="tut-row"><span class="tut-k">TAB</span><span class="tut-d">Mapa de la zona</span></div>
+    <div class="tut-row"><span class="tut-k">ESPACIO</span><span class="tut-d">Pausa</span></div>
+    <div id="tut-tip">💡 Recoge gemas para subir de nivel, derrota al jefe y activa el portal para avanzar de zona.</div>
+    <button class="pxbtn" id="tut-close">¡A JUGAR! [Click]</button>
+  </div>
+</div>
 <div id="fps-counter">FPS 60</div>
 <div id="combo-ind"></div>
 <div id="opt-ov" class="ovl">
@@ -683,7 +723,9 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div class="ctrl-line"><span>Mapa mundial</span><span>TAB</span></div>
     <div class="ctrl-line"><span>Pausa</span><span>ESPACIO</span></div>
     <div class="opt-sec">OBJETIVO</div>
-    <div style="font-size:7px;color:#bba;line-height:2.2;">Sobrevive, sube de nivel y derrota a los jefes de cada bioma. Activa el portal para avanzar al siguiente mundo. Conquista los 4 biomas: Bosque, Desierto, Cementerio e Infierno.</div>
+    <div style="font-size:7px;color:#bba;line-height:2.2;">Sobrevive, sube de nivel y derrota a los jefes de cada zona. Activa el portal para avanzar. Conquista las 5 zonas: Bosque, Desierto, Cementerio, Infierno y el Abismo. Luego desafía la Supervivencia Infinita.</div>
+    <div class="opt-sec">ACERCA DE</div>
+    <div style="font-size:7px;color:#9a88b0;line-height:2.2;">BLOOD RITE v2.0 — roguelite de supervivencia.<br>Creado por <span style="color:var(--gold)">riyaplays710</span>. ¡Gracias por jugar! ❤️</div>
     <div class="ovl-foot"><button class="pxbtn" id="cred-close">CERRAR</button></div>
   </div>
 </div>
@@ -711,7 +753,7 @@ let SAVE={unlockedMaps:[0],lastChar:null,bestLevel:0,totalKills:0,totalCoins:0,r
   unlockedSkins:['default'],equippedSkin:'default',missions:{},bestTime:0,lifeBosses:0,bestWave:0,
   equippedTomes:['t_power','t_swift'],
   gold:0,shopLevels:{},achievements:{},bestEndlessWave:0,bestEndlessTime:0,abyssCleared:false,endlessUnlocked:false,
-  seen:{},lastDaily:'',lastDailyTime:0,dailyStreak:0};
+  seen:{},lastDaily:'',lastDailyTime:0,dailyStreak:0,tutShown:false};
 
 function loadSettings(){try{const raw=localStorage.getItem(SK_SET);if(raw)SETTINGS={...DEFAULT_SETTINGS,...JSON.parse(raw)};}catch(e){SETTINGS={...DEFAULT_SETTINGS};}}
 function saveSettings(){try{localStorage.setItem(SK_SET,JSON.stringify(SETTINGS));}catch(e){}}
@@ -1913,28 +1955,61 @@ function gameOver(){
   if(G.endless){SAVE.bestEndlessWave=Math.max(SAVE.bestEndlessWave||0,G.waveNum);SAVE.bestEndlessTime=Math.max(SAVE.bestEndlessTime||0,~~G.time);}
   bankGold(G.coinCount);checkMissions();checkAchievements();autoSave();
   const t=~~G.time,dm=playerDmgMult(G.player);
-  document.getElementById('go-stats').textContent='HEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nMAPA: '+G.mapDef.emoji+' '+G.mapDef.name+'\nNIVEL: '+G.player.level+'\nDANO: '+(G.player.baseDmg*G.player.dmgBonusMult).toFixed(1)+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\nTIEMPO: '+String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')+'\nOLA: '+G.waveNum+(G.overTime?'\nOVERTIME: x'+G.overTimeMult.toFixed(1):'');
+  const goldEarned=~~(G.coinCount*(1+((SAVE.shopLevels&&SAVE.shopLevels.gold||0)*0.15)));
+  const recordWave=G.endless&&G.waveNum>=(SAVE.bestEndlessWave||0);
+  document.getElementById('go-stats').textContent=
+    'HEROE: '+CHARS[G.player.charKey].name.toUpperCase()+
+    '\nMODO: '+(G.endless?'SUPERVIVENCIA ∞':G.mapDef.emoji+' '+G.mapDef.name)+
+    '\nNIVEL: '+G.player.level+
+    '\nKILLS: '+G.kills+
+    '\nCOMBO MÁX: '+(G.comboBest||0)+
+    '\nOLA: '+G.waveNum+(recordWave?' ⭐ ¡RÉCORD!':'')+
+    '\nTIEMPO: '+String(~~(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')+
+    '\nMONEDAS: '+G.coinCount+
+    '\n🪙 +'+goldEarned+' AL BANCO (total '+(SAVE.gold||0)+')'+
+    (G.overTime?'\nOVERTIME: x'+G.overTimeMult.toFixed(1):'');
   document.getElementById('go-ov').classList.add('show');document.getElementById('boss-bar-wrap').classList.remove('show');
 }
 
 function fullReset(){
   musicStop();
   persistentPlayer=null;unlockedMaps=[0];curMapIdx=0;chestsOpened=0;chestPending=null;totemPending=null;
-  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov','tome-ov','shop-ov','ach-ov','codex-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
+  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov','tome-ov','shop-ov','ach-ov','codex-ov','tut-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
   document.getElementById('boss-bar-wrap').classList.remove('show');hideEPr();updateIntroMapPreview();
 }
 
 document.getElementById('btn-start').onclick=()=>{pendingMode='normal';renderSkinStrip();showScreen('screen-select');};
-document.querySelectorAll('.char-card').forEach(c=>{c.onclick=()=>{selChar=c.dataset.char;persistentPlayer=null;curMapIdx=0;chestsOpened=0;SAVE.lastChar=selChar;saveProgress();showScreen('screen-game');initGame(selChar,0,false,false,pendingMode==='endless');lastTime=performance.now();startLoop();};});
+document.querySelectorAll('.char-card').forEach(c=>{c.onclick=()=>{startRun(c.dataset.char);};});
+document.getElementById('tut-close').onclick=closeTutorial;
 document.getElementById('gorestart-btn').onclick=()=>{document.getElementById('go-ov').classList.remove('show');document.getElementById('go-title').textContent='CAISTE';document.getElementById('go-title').style.color='var(--blood)';fullReset();showScreen('screen-select');};
 document.getElementById('gomenu-btn').onclick=()=>{document.getElementById('go-ov').classList.remove('show');document.getElementById('go-title').textContent='CAISTE';document.getElementById('go-title').style.color='var(--blood)';fullReset();updateContinueBtn();updateIntroMapPreview();showScreen('screen-intro');};
 document.getElementById('pbtn-resume').onclick=()=>{if(!G)return;G.paused=false;document.getElementById('pause-ov').classList.remove('show');lastTime=performance.now();startLoop();};
 document.getElementById('pbtn-restart').onclick=()=>{document.getElementById('pause-ov').classList.remove('show');if(G)G.running=false;fullReset();showScreen('screen-select');};
 document.getElementById('pbtn-menu').onclick=()=>{document.getElementById('pause-ov').classList.remove('show');if(G)G.running=false;fullReset();updateContinueBtn();updateIntroMapPreview();showScreen('screen-intro');};
 
+// === RETOQUES FINALES: splash (activa audio en el .exe), tutorial y stats de fin ===
+function dismissSplash(){
+  const s=document.getElementById('splash');if(!s||s.classList.contains('hide'))return;
+  // Desbloquea/inicia el AudioContext con el gesto del usuario (necesario en WebView/.exe)
+  try{_ac=_ac||new (window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();}catch(e){}
+  s.classList.add('hide');setTimeout(()=>{if(s.parentNode)s.style.display='none';},520);
+}
+window.addEventListener('keydown',()=>dismissSplash(),{once:false});
+
+let _pendingStart=null; // guarda la partida a iniciar tras el tutorial
+function startRun(ck){
+  selChar=ck;persistentPlayer=null;curMapIdx=0;chestsOpened=0;SAVE.lastChar=ck;saveProgress();
+  showScreen('screen-game');initGame(ck,0,false,false,pendingMode==='endless');
+  if(!SAVE.tutShown){SAVE.tutShown=true;saveProgress();G.paused=true;document.getElementById('tut-ov').classList.add('show');}
+  lastTime=performance.now();startLoop();
+}
+function closeTutorial(){const t=document.getElementById('tut-ov');if(t)t.classList.remove('show');if(G){G.paused=false;lastTime=performance.now();startLoop();}}
+
 window.addEventListener('keydown',e=>{
   if(G)G.keys[e.key]=true;
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+  const tutOpen=document.getElementById('tut-ov').classList.contains('show');
+  if(tutOpen){if(e.key===' '||e.key==='Enter')closeTutorial();return;} // tutorial abierto: bloquea el resto
   if((e.key==='q'||e.key==='Q')&&G&&G.running&&!G.paused&&!G.minimapOpen)useSpecial();
   if(e.key==='Tab'){e.preventDefault();if(G&&G.running){if(G.minimapOpen){closeMinimap();if(!G.paused){lastTime=performance.now();startLoop();}}else openMinimap();}}
   if(e.key===' '&&G&&G.running&&!G.minimapOpen){G.paused=!G.paused;document.getElementById('pause-ov').classList.toggle('show',G.paused);if(!G.paused){lastTime=performance.now();startLoop();}}
