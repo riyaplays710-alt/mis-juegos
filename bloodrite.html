@@ -386,6 +386,16 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .tut-d{flex:1;color:#cbb;}
 #tut-tip{font-size:7px;color:#9a88b0;line-height:1.9;margin-top:6px;border-top:1px solid #2a1c38;padding-top:9px;}
 #tut-close{margin-top:10px;font-size:9px;align-self:center;}
+/* === TABLA DE KILLS (ranking) === */
+.rank-row{display:flex;align-items:center;gap:10px;font-size:7px;color:#ddd;padding:7px 10px;border:1px solid #2a1c38;background:rgba(14,8,22,.55);}
+.rank-row.rank-head{color:var(--gold);background:rgba(40,28,8,.4);border-color:rgba(240,192,64,.3);}
+.rank-row.me{border-color:var(--green);background:rgba(10,26,16,.5);}
+.rank-row.top1{border-color:#ffd24a;box-shadow:0 0 10px rgba(255,210,74,.3);}
+.rk-pos{min-width:24px;text-align:center;color:var(--gold);}
+.rk-name{flex:1;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rk-kills{min-width:54px;text-align:right;color:#ff7a8a;}
+.rk-info{min-width:120px;text-align:right;color:#9a88b0;font-size:6px;}
+#rank-list{min-height:60px;}
 </style>
 </head>
 
@@ -475,9 +485,11 @@ body.hud-hide-bot #bot-hud{display:none!important;}
       <button class="pxbtn menu-btn" id="btn-missions">MISIONES</button>
       <button class="pxbtn menu-btn" id="btn-achievements">LOGROS</button>
       <button class="pxbtn menu-btn" id="btn-codex">BESTIARIO</button>
+      <button class="pxbtn menu-btn" id="btn-ranking">TABLA DE KILLS 🏅</button>
       <button class="pxbtn menu-btn" id="btn-skins">SKINS</button>
       <button class="pxbtn menu-btn" id="btn-tomes">TOMOS Y ARMAS</button>
       <button class="pxbtn menu-btn" id="btn-options">OPCIONES</button>
+      <button class="pxbtn menu-btn" id="btn-fs">PANTALLA COMPLETA</button>
       <button class="pxbtn menu-btn" id="btn-credits">CONTROLES</button>
     </div>
     <div id="menu-record">v2.0</div>
@@ -537,6 +549,20 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div style="font-size:6px;color:#886688;text-align:center;letter-spacing:1px;" id="codex-summary">Descubiertos 0/0</div>
     <div class="list-scroll" id="codex-list"></div>
     <div class="ovl-foot"><button class="pxbtn" id="codex-close">CERRAR</button></div>
+  </div>
+</div>
+<div id="rank-ov" class="ovl">
+  <div class="ovl-panel" style="min-width:460px;max-width:560px;">
+    <div class="ovl-title">🏅 TABLA DE KILLS</div>
+    <div style="font-size:6px;color:#886688;text-align:center;letter-spacing:1px;">Mejores partidas por número de enemigos eliminados</div>
+    <div class="rank-row rank-head"><span class="rk-pos">#</span><span class="rk-name">JUGADOR</span><span class="rk-kills">KILLS</span><span class="rk-info">DETALLE</span></div>
+    <div class="list-scroll" id="rank-list"></div>
+    <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px;">
+      <span style="font-size:7px;color:#886688;">Tu nombre:</span>
+      <input id="rank-name" maxlength="12" placeholder="ANÓNIMO" style="font-family:'Press Start 2P',monospace;font-size:8px;background:rgba(15,5,20,.8);border:2px solid #55304a;color:var(--gold);padding:6px 8px;width:140px;text-align:center;">
+      <button class="pxbtn" id="rank-save" style="font-size:7px;padding:7px 10px;">GUARDAR</button>
+    </div>
+    <div class="ovl-foot"><button class="pxbtn" id="rank-clear" style="font-size:7px;">BORRAR TABLA</button><button class="pxbtn" id="rank-close">CERRAR</button></div>
   </div>
 </div>
 <div id="screen-select" class="screen">
@@ -685,6 +711,7 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div class="tut-row"><span class="tut-k">E</span><span class="tut-d">Abrir cofres / activar portal</span></div>
     <div class="tut-row"><span class="tut-k">TAB</span><span class="tut-d">Mapa de la zona</span></div>
     <div class="tut-row"><span class="tut-k">ESPACIO</span><span class="tut-d">Pausa</span></div>
+    <div class="tut-row"><span class="tut-k">F</span><span class="tut-d">Pantalla completa</span></div>
     <div id="tut-tip">💡 Recoge gemas para subir de nivel, derrota al jefe y activa el portal para avanzar de zona.</div>
     <button class="pxbtn" id="tut-close">¡A JUGAR! [Click]</button>
   </div>
@@ -722,6 +749,7 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div class="ctrl-line"><span>Interactuar (cofre/portal)</span><span>E</span></div>
     <div class="ctrl-line"><span>Mapa mundial</span><span>TAB</span></div>
     <div class="ctrl-line"><span>Pausa</span><span>ESPACIO</span></div>
+    <div class="ctrl-line"><span>Pantalla completa</span><span>F</span></div>
     <div class="opt-sec">OBJETIVO</div>
     <div style="font-size:7px;color:#bba;line-height:2.2;">Sobrevive, sube de nivel y derrota a los jefes de cada zona. Activa el portal para avanzar. Conquista las 5 zonas: Bosque, Desierto, Cementerio, Infierno y el Abismo. Luego desafía la Supervivencia Infinita.</div>
     <div class="opt-sec">ACERCA DE</div>
@@ -753,7 +781,7 @@ let SAVE={unlockedMaps:[0],lastChar:null,bestLevel:0,totalKills:0,totalCoins:0,r
   unlockedSkins:['default'],equippedSkin:'default',missions:{},bestTime:0,lifeBosses:0,bestWave:0,
   equippedTomes:['t_power','t_swift'],
   gold:0,shopLevels:{},achievements:{},bestEndlessWave:0,bestEndlessTime:0,abyssCleared:false,endlessUnlocked:false,
-  seen:{},lastDaily:'',lastDailyTime:0,dailyStreak:0,tutShown:false};
+  seen:{},lastDaily:'',lastDailyTime:0,dailyStreak:0,tutShown:false,playerName:'',scores:[]};
 
 function loadSettings(){try{const raw=localStorage.getItem(SK_SET);if(raw)SETTINGS={...DEFAULT_SETTINGS,...JSON.parse(raw)};}catch(e){SETTINGS={...DEFAULT_SETTINGS};}}
 function saveSettings(){try{localStorage.setItem(SK_SET,JSON.stringify(SETTINGS));}catch(e){}}
@@ -1751,7 +1779,7 @@ function goNextMap(){
   const ni=curMapIdx+1;
   if(ni>=MAPS.length){ // tras EL ABISMO: victoria total
     SAVE.runs++;SAVE.totalKills+=G.kills;SAVE.totalCoins+=G.coinCount;SAVE._fullClearFlag=true;SAVE.abyssCleared=true;SAVE.endlessUnlocked=true;
-    bankGold(G.coinCount);checkMissions();checkAchievements();autoSave();
+    bankGold(G.coinCount);checkMissions();checkAchievements();submitScore(G);autoSave();
     document.getElementById('go-title').textContent='VICTORIA TOTAL!';document.getElementById('go-title').style.color='#c79bff';document.getElementById('go-stats').textContent='Has conquistado los 5 mundos y EL ABISMO!\n\nHEROE: '+CHARS[G.player.charKey].name.toUpperCase()+'\nNIVEL: '+G.player.level+'\nKILLS: '+G.kills+'\nMONEDAS: '+G.coinCount+'\n\nDesbloqueado: SUPERVIVENCIA INFINITA';document.getElementById('go-ov').classList.add('show');return;}
   if(!unlockedMaps.includes(ni))unlockedMaps.push(ni);
   if(!SAVE.unlockedMaps.includes(ni)){SAVE.unlockedMaps.push(ni);} bankGold(~~(G.coinCount*0.5));autoSave();
@@ -1953,7 +1981,7 @@ function gameOver(){
   if(!G||!G.running)return;G.running=false;document.getElementById('danger-flash').classList.remove('show');musicStop();
   SAVE.runs++;SAVE.totalKills+=G.kills;SAVE.totalCoins+=G.coinCount;SAVE.bestTime=Math.max(SAVE.bestTime||0,~~G.time);SAVE.bestWave=Math.max(SAVE.bestWave||0,G.waveNum);
   if(G.endless){SAVE.bestEndlessWave=Math.max(SAVE.bestEndlessWave||0,G.waveNum);SAVE.bestEndlessTime=Math.max(SAVE.bestEndlessTime||0,~~G.time);}
-  bankGold(G.coinCount);checkMissions();checkAchievements();autoSave();
+  bankGold(G.coinCount);checkMissions();checkAchievements();submitScore(G);autoSave();
   const t=~~G.time,dm=playerDmgMult(G.player);
   const goldEarned=~~(G.coinCount*(1+((SAVE.shopLevels&&SAVE.shopLevels.gold||0)*0.15)));
   const recordWave=G.endless&&G.waveNum>=(SAVE.bestEndlessWave||0);
@@ -1974,7 +2002,7 @@ function gameOver(){
 function fullReset(){
   musicStop();
   persistentPlayer=null;unlockedMaps=[0];curMapIdx=0;chestsOpened=0;chestPending=null;totemPending=null;
-  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov','tome-ov','shop-ov','ach-ov','codex-ov','tut-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
+  ['danger-flash','boss-bar-wrap','go-ov','pause-ov','lu-ov','totem-ov','chest-ov','minimap-ov','mis-ov','skin-ov','opt-ov','cred-ov','tome-ov','shop-ov','ach-ov','codex-ov','tut-ov','rank-ov'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('show');}});
   document.getElementById('boss-bar-wrap').classList.remove('show');hideEPr();updateIntroMapPreview();
 }
 
@@ -2012,6 +2040,7 @@ window.addEventListener('keydown',e=>{
   if(tutOpen){if(e.key===' '||e.key==='Enter')closeTutorial();return;} // tutorial abierto: bloquea el resto
   if((e.key==='q'||e.key==='Q')&&G&&G.running&&!G.paused&&!G.minimapOpen)useSpecial();
   if(e.key==='Tab'){e.preventDefault();if(G&&G.running){if(G.minimapOpen){closeMinimap();if(!G.paused){lastTime=performance.now();startLoop();}}else openMinimap();}}
+  if(e.key==='f'||e.key==='F')toggleFullscreen();
   if(e.key===' '&&G&&G.running&&!G.minimapOpen){G.paused=!G.paused;document.getElementById('pause-ov').classList.toggle('show',G.paused);if(!G.paused){lastTime=performance.now();startLoop();}}
   if((e.key==='e'||e.key==='E')&&G&&G.running&&!G.paused&&!G.minimapOpen){
     if(document.getElementById('chest-ov').classList.contains('show')){confirmChest();return;}
@@ -2044,6 +2073,15 @@ document.querySelectorAll('#opt-ov .stepbtn').forEach(b=>{b.onclick=()=>{
 function openOptions(){renderOptions();document.getElementById('opt-ov').classList.add('show');}
 function closeOptions(){document.getElementById('opt-ov').classList.remove('show');}
 document.getElementById('btn-options').onclick=openOptions;
+// Pantalla completa (ideal para el .exe)
+function toggleFullscreen(){
+  try{
+    const el=document.documentElement;
+    if(!document.fullscreenElement){(el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen).call(el);}
+    else{(document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen).call(document);}
+  }catch(e){}
+}
+const _fsBtn=document.getElementById('btn-fs');if(_fsBtn)_fsBtn.onclick=toggleFullscreen;
 document.getElementById('opt-close').onclick=closeOptions;
 document.getElementById('pbtn-options').onclick=openOptions;
 document.getElementById('opt-reset').onclick=()=>{SETTINGS={...DEFAULT_SETTINGS};applySettings();saveSettings();renderOptions();};
@@ -2147,6 +2185,11 @@ document.getElementById('shop-close').onclick=()=>document.getElementById('shop-
 document.getElementById('btn-achievements').onclick=()=>{renderAchievements();document.getElementById('ach-ov').classList.add('show');};
 document.getElementById('ach-close').onclick=()=>document.getElementById('ach-ov').classList.remove('show');
 document.getElementById('btn-codex').onclick=()=>{renderCodex();document.getElementById('codex-ov').classList.add('show');};
+// Tabla de kills (ranking)
+document.getElementById('btn-ranking').onclick=()=>{renderRanking();document.getElementById('rank-ov').classList.add('show');};
+document.getElementById('rank-close').onclick=()=>document.getElementById('rank-ov').classList.remove('show');
+document.getElementById('rank-save').onclick=()=>{const ni=document.getElementById('rank-name');SAVE.playerName=(ni.value||'').trim().toUpperCase()||'ANÓNIMO';saveProgress();toast('💾','NOMBRE GUARDADO',SAVE.playerName,'rare');};
+document.getElementById('rank-clear').onclick=()=>{if(confirm('¿Borrar toda la tabla de kills?')){SAVE.scores=[];saveProgress();renderRanking();}};
 document.getElementById('codex-close').onclick=()=>document.getElementById('codex-ov').classList.remove('show');
 
 // ============================================================
@@ -2280,6 +2323,32 @@ function claimDaily(){const now=Date.now(),t=todayStr();if(SAVE.lastDaily===t)re
   SAVE.lastDaily=t;SAVE.lastDailyTime=now;
   const reward=120+Math.min(8,SAVE.dailyStreak)*40;SAVE.gold=(SAVE.gold||0)+reward;saveProgress();
   setTimeout(()=>{toast('🎁','RECOMPENSA DIARIA','+'+reward+' oro · racha '+SAVE.dailyStreak,'legendary');},900);
+}
+
+// ---- TABLA DE KILLS (ranking local de mejores partidas) ----
+function submitScore(g){
+  if(!g)return;
+  SAVE.scores=SAVE.scores||[];
+  const entry={name:(SAVE.playerName||'ANÓNIMO'),kills:g.kills||0,level:g.player.level||1,wave:g.waveNum||1,
+    mode:g.endless?'∞':(g.mapDef&&g.mapDef.emoji||''),char:CHARS[g.player.charKey]?CHARS[g.player.charKey].emoji:'',time:~~g.time,when:Date.now()};
+  SAVE.scores.push(entry);
+  SAVE.scores.sort((a,b)=>b.kills-a.kills);
+  if(SAVE.scores.length>20)SAVE.scores=SAVE.scores.slice(0,20); // top 20
+  SAVE._lastScoreTime=entry.when;
+  saveProgress();
+}
+function renderRanking(){
+  const list=document.getElementById('rank-list');if(!list)return;list.innerHTML='';
+  const sc=SAVE.scores||[];
+  const ni=document.getElementById('rank-name');if(ni&&!ni.value)ni.value=SAVE.playerName||'';
+  if(!sc.length){list.innerHTML='<div style="font-size:7px;color:#776;text-align:center;padding:20px;">Aún no hay partidas.<br>¡Juega y aparecerás aquí! 🗡️</div>';return;}
+  sc.forEach((s,i)=>{
+    const r=document.createElement('div');r.className='rank-row'+(i===0?' top1':'')+(s.when===SAVE._lastScoreTime?' me':'');
+    const mm=String(~~((s.time||0)/60)).padStart(2,'0'),ss=String((s.time||0)%60).padStart(2,'0');
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    r.innerHTML='<span class="rk-pos">'+medal+'</span><span class="rk-name">'+(s.char||'')+' '+s.name+'</span><span class="rk-kills">'+s.kills+'</span><span class="rk-info">'+s.mode+' Nv'+s.level+' · Ola '+s.wave+' · '+mm+':'+ss+'</span>';
+    list.appendChild(r);
+  });
 }
 
 // Inicializacion Fase 1: cargar ajustes y progreso guardados.
