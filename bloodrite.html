@@ -396,6 +396,19 @@ body.hud-hide-bot #bot-hud{display:none!important;}
 .rk-kills{min-width:54px;text-align:right;color:#ff7a8a;}
 .rk-info{min-width:120px;text-align:right;color:#9a88b0;font-size:6px;}
 #rank-list{min-height:60px;}
+/* === panel de ranking fijo a la izquierda (estilo Megabonk) === */
+#rank-panel{position:absolute;left:18px;top:50%;transform:translateY(-50%);z-index:8;width:210px;background:linear-gradient(160deg,rgba(14,8,24,.92),rgba(20,12,34,.92));border:2px solid var(--border);border-radius:4px;padding:12px 12px 8px;cursor:pointer;box-shadow:0 0 30px rgba(0,0,0,.5);transition:transform .15s,box-shadow .15s;}
+#rank-panel:hover{box-shadow:0 0 26px rgba(240,192,64,.3);border-color:var(--gold);}
+#rank-panel-title{font-size:9px;color:var(--gold);letter-spacing:2px;text-align:center;text-shadow:0 0 10px var(--gold);margin-bottom:9px;border-bottom:1px solid var(--border);padding-bottom:7px;}
+#rank-panel-list{display:flex;flex-direction:column;gap:5px;}
+.rp-row{display:flex;align-items:center;gap:7px;font-size:7px;color:#cbb;}
+.rp-pos{min-width:16px;text-align:center;}
+.rp-name{flex:1;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rp-kills{color:#ff7a8a;font-size:7px;}
+.rp-row.rp1 .rp-name{color:#ffd24a;}
+.rp-empty{font-size:6px;color:#776;text-align:center;line-height:1.8;padding:10px 4px;}
+#rank-panel-foot{font-size:5px;color:#776;text-align:center;letter-spacing:1px;margin-top:8px;}
+@media(max-width:760px){#rank-panel{display:none;}}
 </style>
 </head>
 
@@ -485,14 +498,17 @@ body.hud-hide-bot #bot-hud{display:none!important;}
       <button class="pxbtn menu-btn" id="btn-missions">MISIONES</button>
       <button class="pxbtn menu-btn" id="btn-achievements">LOGROS</button>
       <button class="pxbtn menu-btn" id="btn-codex">BESTIARIO</button>
-      <button class="pxbtn menu-btn" id="btn-ranking">TABLA DE KILLS 🏅</button>
       <button class="pxbtn menu-btn" id="btn-skins">SKINS</button>
       <button class="pxbtn menu-btn" id="btn-tomes">TOMOS Y ARMAS</button>
       <button class="pxbtn menu-btn" id="btn-options">OPCIONES</button>
-      <button class="pxbtn menu-btn" id="btn-fs">PANTALLA COMPLETA</button>
       <button class="pxbtn menu-btn" id="btn-credits">CONTROLES</button>
     </div>
     <div id="menu-record">v2.0</div>
+  </div>
+  <div id="rank-panel">
+    <div id="rank-panel-title">🏅 TOP KILLS</div>
+    <div id="rank-panel-list"></div>
+    <div id="rank-panel-foot">Click para ver más</div>
   </div>
   <div id="credit-tag">creado por riyaplays710</div>
 </div>
@@ -737,6 +753,8 @@ body.hud-hide-bot #bot-hud{display:none!important;}
     <div class="opt-row"><span class="opt-lbl">Tamaño del HUD</span><div class="opt-ctrl"><button class="stepbtn" data-opt="hudScale" data-dir="-1">−</button><span class="opt-val" id="optv-hudScale">100%</span><button class="stepbtn" data-opt="hudScale" data-dir="1">+</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Barra superior (vida/xp)</span><div class="opt-ctrl"><button class="tgl" data-tgl="hudTop">ON</button></div></div>
     <div class="opt-row"><span class="opt-lbl">Barra inferior (armas)</span><div class="opt-ctrl"><button class="tgl" data-tgl="hudBottom">ON</button></div></div>
+    <div class="opt-sec">PANTALLA</div>
+    <div class="opt-row"><span class="opt-lbl">Pantalla completa</span><div class="opt-ctrl"><button class="tgl" id="opt-fs">OFF</button></div></div>
     <div class="ovl-foot"><button class="pxbtn" id="opt-reset">RESTABLECER</button><button class="pxbtn" id="opt-close">CERRAR</button></div>
   </div>
 </div>
@@ -2010,10 +2028,10 @@ document.getElementById('btn-start').onclick=()=>{pendingMode='normal';renderSki
 document.querySelectorAll('.char-card').forEach(c=>{c.onclick=()=>{startRun(c.dataset.char);};});
 document.getElementById('tut-close').onclick=closeTutorial;
 document.getElementById('gorestart-btn').onclick=()=>{document.getElementById('go-ov').classList.remove('show');document.getElementById('go-title').textContent='CAISTE';document.getElementById('go-title').style.color='var(--blood)';fullReset();showScreen('screen-select');};
-document.getElementById('gomenu-btn').onclick=()=>{document.getElementById('go-ov').classList.remove('show');document.getElementById('go-title').textContent='CAISTE';document.getElementById('go-title').style.color='var(--blood)';fullReset();updateContinueBtn();updateIntroMapPreview();showScreen('screen-intro');};
+document.getElementById('gomenu-btn').onclick=()=>{document.getElementById('go-ov').classList.remove('show');document.getElementById('go-title').textContent='CAISTE';document.getElementById('go-title').style.color='var(--blood)';fullReset();updateContinueBtn();updateIntroMapPreview();renderRankPanel();showScreen('screen-intro');};
 document.getElementById('pbtn-resume').onclick=()=>{if(!G)return;G.paused=false;document.getElementById('pause-ov').classList.remove('show');lastTime=performance.now();startLoop();};
 document.getElementById('pbtn-restart').onclick=()=>{document.getElementById('pause-ov').classList.remove('show');if(G)G.running=false;fullReset();showScreen('screen-select');};
-document.getElementById('pbtn-menu').onclick=()=>{document.getElementById('pause-ov').classList.remove('show');if(G)G.running=false;fullReset();updateContinueBtn();updateIntroMapPreview();showScreen('screen-intro');};
+document.getElementById('pbtn-menu').onclick=()=>{document.getElementById('pause-ov').classList.remove('show');if(G)G.running=false;fullReset();updateContinueBtn();updateIntroMapPreview();renderRankPanel();showScreen('screen-intro');};
 
 // === RETOQUES FINALES: splash (activa audio en el .exe), tutorial y stats de fin ===
 function dismissSplash(){
@@ -2082,6 +2100,12 @@ function toggleFullscreen(){
   }catch(e){}
 }
 const _fsBtn=document.getElementById('btn-fs');if(_fsBtn)_fsBtn.onclick=toggleFullscreen;
+// Toggle de pantalla completa dentro de Opciones
+function syncFsToggle(){const b=document.getElementById('opt-fs');if(b){const on=!!document.fullscreenElement;b.classList.toggle('on',on);b.classList.toggle('off',!on);b.textContent=on?'ON':'OFF';}}
+const _optFs=document.getElementById('opt-fs');if(_optFs)_optFs.onclick=()=>{toggleFullscreen();setTimeout(syncFsToggle,150);};
+document.addEventListener('fullscreenchange',syncFsToggle);
+// Panel de ranking del menu: clic abre la tabla completa
+const _rp=document.getElementById('rank-panel');if(_rp)_rp.onclick=()=>{renderRanking();document.getElementById('rank-ov').classList.add('show');};
 document.getElementById('opt-close').onclick=closeOptions;
 document.getElementById('pbtn-options').onclick=openOptions;
 document.getElementById('opt-reset').onclick=()=>{SETTINGS={...DEFAULT_SETTINGS};applySettings();saveSettings();renderOptions();};
@@ -2350,9 +2374,21 @@ function renderRanking(){
     list.appendChild(r);
   });
 }
+// Panel fijo del menu (top 8, estilo Megabonk): nombre + maximo de kills
+function renderRankPanel(){
+  const list=document.getElementById('rank-panel-list');if(!list)return;list.innerHTML='';
+  const sc=SAVE.scores||[];
+  if(!sc.length){list.innerHTML='<div class="rp-empty">Aún sin partidas.<br>¡Sé el primero! 🗡️</div>';return;}
+  sc.slice(0,8).forEach((s,i)=>{
+    const r=document.createElement('div');r.className='rp-row'+(i===0?' rp1':'');
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    r.innerHTML='<span class="rp-pos">'+medal+'</span><span class="rp-name">'+(s.char||'')+' '+s.name+'</span><span class="rp-kills">'+s.kills+' 💀</span>';
+    list.appendChild(r);
+  });
+}
 
 // Inicializacion Fase 1: cargar ajustes y progreso guardados.
-loadSettings();loadSave();applySettings();renderOptions();updateContinueBtn();renderSkinStrip();checkAchievements();claimDaily();
+loadSettings();loadSave();applySettings();renderOptions();updateContinueBtn();renderSkinStrip();checkAchievements();claimDaily();renderRankPanel();
 resizeCanvas();updateIntroMapPreview();
 </script>
 </body>
