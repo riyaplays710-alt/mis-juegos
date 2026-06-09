@@ -2209,8 +2209,7 @@ document.getElementById('shop-close').onclick=()=>document.getElementById('shop-
 document.getElementById('btn-achievements').onclick=()=>{renderAchievements();document.getElementById('ach-ov').classList.add('show');};
 document.getElementById('ach-close').onclick=()=>document.getElementById('ach-ov').classList.remove('show');
 document.getElementById('btn-codex').onclick=()=>{renderCodex();document.getElementById('codex-ov').classList.add('show');};
-// Tabla de kills (ranking)
-document.getElementById('btn-ranking').onclick=()=>{renderRanking();document.getElementById('rank-ov').classList.add('show');};
+// Tabla de kills (ranking) — se abre desde el panel del menu (btn-ranking ya no existe)
 document.getElementById('rank-close').onclick=()=>document.getElementById('rank-ov').classList.remove('show');
 document.getElementById('rank-save').onclick=()=>{const ni=document.getElementById('rank-name');SAVE.playerName=(ni.value||'').trim().toUpperCase()||'ANÓNIMO';saveProgress();toast('💾','NOMBRE GUARDADO',SAVE.playerName,'rare');};
 document.getElementById('rank-clear').onclick=()=>{if(confirm('¿Borrar toda la tabla de kills?')){SAVE.scores=[];saveProgress();renderRanking();}};
